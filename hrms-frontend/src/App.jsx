@@ -16,7 +16,16 @@ import MyLeavesPage from './pages/MyLeavesPage';
 import LeaveTypesPage from './pages/LeaveTypesPage';
 import ProfilePage from './pages/ProfilePage';
 import MyPaySlips from './pages/MyPaySlips';
+import ReportsPage from './pages/ReportsPage';
+import SettingsPage from './pages/SettingsPage';
+import HolidayPage from './pages/HolidayPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import { useAuth } from './context/AuthContext';
+
+const EmployeeRoute = () => {
+  const { isAdmin, isHR } = useAuth();
+  return isAdmin || isHR ? <EmployeeList /> : <ProfilePage />;
+};
 
 function App() {
   return (
@@ -39,7 +48,12 @@ function App() {
             <Route index element={<Dashboard />} />
 
             {/* Employee Routes */}
-            <Route path="employees" element={<EmployeeList />} />
+            <Route
+              path="employees"
+              element={
+                <EmployeeRoute />
+              }
+            />
             <Route path="employees/add" element={<AddEmployee />} />
             <Route path="employees/edit/:id" element={<EditEmployee />} />
 
@@ -54,7 +68,10 @@ function App() {
 
             {/* Payroll & Profile */}
             <Route path="payroll" element={<MyPaySlips />} />
+            <Route path="holidays" element={<HolidayPage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="reports" element={<ReportsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
 
           {/* Catch all */}

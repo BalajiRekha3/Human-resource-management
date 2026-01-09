@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { employeeAPI } from '../services/api';
+import { employeeAPI, userAPI } from '../services/api';
 import { toast } from 'react-toastify';
 import {
     useReactTable,
@@ -34,6 +34,8 @@ const EmployeeList = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [employeeToDelete, setEmployeeToDelete] = useState(null);
     const [viewEmployee, setViewEmployee] = useState(null);
+    const [showEditUserModal, setShowEditUserModal] = useState(false);
+    const [userToEdit, setUserToEdit] = useState(null);
 
     // Prevent double fetch
     const fetchedRef = useRef(false);
@@ -49,12 +51,41 @@ const EmployeeList = () => {
     const fetchEmployees = async () => {
         try {
             setLoading(true);
-            const response = await employeeAPI.getAll();
-            setEmployees(response.data);
-            // NO TOAST HERE - only on user actions
+            const [empResponse, userResponse] = await Promise.all([
+                employeeAPI.getAll(),
+                userAPI.getAll()
+            ]);
+
+            const employees = empResponse.data;
+            const users = userResponse.data;
+
+            // Set of User IDs that are already linked to an employee profile
+            const linkedUserIds = new Set(employees.map(e => e.userId).filter(Boolean));
+
+            // Filter users who are NOT linked
+            const unlinkedUsers = users.filter(u => !linkedUserIds.has(u.id));
+
+            // Create pseudo-employee objects for these users
+            const systemUsers = unlinkedUsers.map(u => ({
+                id: `user-${u.id}`, // String ID to avoid collision
+                isSystemUser: true,
+                employeeCode: `SYS-${u.id}`,
+                fullName: u.username || 'System User',
+                email: u.email,
+                department: 'System/HR', // Indicate they are system users
+                designation: u.roles ? u.roles.join(', ') : 'User',
+                employmentStatus: 'ACTIVE',
+                basicSalary: 0,
+                phoneNumber: 'N/A',
+                joiningDate: null
+            }));
+
+            // Merge
+            setEmployees([...employees, ...systemUsers]);
+
         } catch (error) {
-            console.error('Error fetching employees:', error);
-            toast.error('Failed to fetch employees');
+            console.error('Error fetching data:', error);
+            toast.error('Failed to fetch employees and users');
         } finally {
             setLoading(false);
         }
@@ -62,14 +93,19 @@ const EmployeeList = () => {
 
     const handleDelete = async () => {
         try {
-            await employeeAPI.delete(employeeToDelete.id);
+            if (employeeToDelete.isSystemUser) {
+                const userId = employeeToDelete.id.split('-')[1];
+                await userAPI.delete(userId);
+            } else {
+                await employeeAPI.delete(employeeToDelete.id);
+            }
             setShowDeleteModal(false);
             toast.success(`${employeeToDelete.fullName} deleted successfully!`);
             setEmployeeToDelete(null);
             fetchEmployees(); // Refresh list silently
         } catch (error) {
-            console.error('Error deleting employee:', error);
-            toast.error('Failed to delete employee');
+            console.error('Error deleting employee/user:', error);
+            toast.error('Failed to delete record');
         }
     };
 
@@ -168,8 +204,8 @@ const EmployeeList = () => {
                 cell: (info) => (
                     <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${info.getValue() === 'ACTIVE'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-700'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-700'
                             }`}
                     >
                         {info.getValue()}
@@ -191,26 +227,44 @@ const EmployeeList = () => {
                 cell: ({ row }) => (
                     <div className="flex gap-2">
                         <button
-                            onClick={() => setViewEmployee(row.original)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                            title="View Details"
+                            onClick={() => {
+                                if (row.original.isSystemUser) {
+                                    navigate('/dashboard/employees/add', {
+                                        state: { linkedUser: row.original }
+                                    });
+                                } else {
+                                    setViewEmployee(row.original);
+                                }
+                            }}
+                            className={`p-2 rounded-lg transition ${!row.original.isSystemUser ? 'text-blue-600 hover:bg-blue-50' : 'text-blue-600 hover:bg-blue-50'}`}
+                            title={row.original.isSystemUser ? "Complete Profile" : "View Details"}
                         >
                             <Eye size={18} />
                         </button>
+
                         <button
-                            onClick={() => navigate(`/dashboard/employees/edit/${row.original.id}`)}
+                            onClick={() => {
+                                if (row.original.isSystemUser) {
+                                    navigate('/dashboard/employees/add', {
+                                        state: { linkedUser: row.original }
+                                    });
+                                } else {
+                                    navigate(`/dashboard/employees/edit/${row.original.id}`);
+                                }
+                            }}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
-                            title="Edit Employee"
+                            title={row.original.isSystemUser ? "Complete Profile" : "Edit Employee"}
                         >
                             <Edit size={18} />
                         </button>
+
                         <button
                             onClick={() => {
                                 setEmployeeToDelete(row.original);
                                 setShowDeleteModal(true);
                             }}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                            title="Delete Employee"
+                            title="Delete"
                         >
                             <Trash2 size={18} />
                         </button>

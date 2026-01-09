@@ -53,9 +53,25 @@ const ApplyLeave = () => {
                 formData.leaveTypeId,
                 year
             );
-            setLeaveBalance(response.data || {});
+
+            // Check if response indicates failure
+            if (response && !response.success) {
+                setLeaveBalance({
+                    totalDays: 0,
+                    usedDays: 0,
+                    remainingDays: 0
+                });
+            } else {
+                setLeaveBalance(response.data || {});
+            }
         } catch (error) {
-            toast.error('Failed to fetch leave balance');
+            // If balance doesn't exist (404) or any error, set to 0 instead of showing error
+            setLeaveBalance({
+                totalDays: 0,
+                usedDays: 0,
+                remainingDays: 0
+            });
+            console.log('Leave balance not found, showing 0 balance');
         }
     };
 

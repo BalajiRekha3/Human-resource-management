@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { employeeAPI } from '../../services/api';
 import {
     LayoutDashboard,
     Users,
@@ -17,9 +18,27 @@ import {
 
 const DashboardLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const { user, logout } = useAuth();
+    const { user, logout, employeeId } = useAuth();
+    const [profileImage, setProfileImage] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
+
+    useEffect(() => {
+        const fetchProfileImage = async () => {
+            if (employeeId) {
+                try {
+                    const response = await employeeAPI.getById(employeeId);
+                    const data = response.data?.data || response.data;
+                    if (data && data.profileImage) {
+                        setProfileImage(data.profileImage);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch profile image', error);
+                }
+            }
+        };
+        fetchProfileImage();
+    }, [employeeId]);
 
     const handleLogout = () => {
         logout();
@@ -28,7 +47,7 @@ const DashboardLayout = () => {
 
     const menuItems = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-        { name: 'Employees', path: '/dashboard/employees', icon: Users },
+        { name: 'Employees', path: '/dashboard/employees', icon: Users, roles: ['ROLE_ADMIN', 'ROLE_HR'] },
         { name: 'Attendance', path: '/dashboard/attendance', icon: Clock },
         {
             name: 'Leave',
@@ -37,11 +56,12 @@ const DashboardLayout = () => {
             subItems: [
                 { name: 'My Leaves', path: '/dashboard/leave' },
                 { name: 'Apply Leave', path: '/dashboard/leave/apply' },
-                { name: 'Approve Leaves', path: '/dashboard/leave/approve', role: 'ROLE_ADMIN' },
-                { name: 'Leave Types', path: '/dashboard/leave/types', role: 'ROLE_ADMIN' }
+                { name: 'Approve Leaves', path: '/dashboard/leave/approve', roles: ['ROLE_ADMIN', 'ROLE_HR'] },
+                { name: 'Leave Types', path: '/dashboard/leave/types', roles: ['ROLE_ADMIN', 'ROLE_HR'] }
             ]
         },
-        { name: 'Reports', path: '/dashboard/reports', icon: FileText, role: 'ROLE_ADMIN' },
+        { name: 'Reports', path: '/dashboard/reports', icon: FileText, roles: ['ROLE_ADMIN', 'ROLE_HR'] },
+        { name: 'Holiday Calendar', path: '/dashboard/holidays', icon: Calendar },
         { name: 'My Payslips', path: '/dashboard/payroll', icon: CreditCard },
         { name: 'My Profile', path: '/dashboard/profile', icon: User },
         { name: 'Settings', path: '/dashboard/settings', icon: Settings },
@@ -78,10 +98,14 @@ const DashboardLayout = () => {
                                     <p className="text-sm font-medium text-gray-700">{user?.username}</p>
                                     <p className="text-xs text-gray-500">{user?.roles?.[0]?.replace('ROLE_', '')}</p>
                                 </div>
-                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <span className="text-blue-600 font-semibold">
-                                        {user?.username?.charAt(0).toUpperCase()}
-                                    </span>
+                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
+                                    {profileImage ? (
+                                        <img src={profileImage} alt={user?.username} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-blue-600 font-semibold">
+                                            {user?.username?.charAt(0).toUpperCase()}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <button
@@ -104,7 +128,9 @@ const DashboardLayout = () => {
                 <nav className="p-4 space-y-1">
                     {menuItems.map((item) => {
                         const Icon = item.icon;
-                        const hasRole = !item.role || user?.roles?.some(r => r === item.role);
+                        const hasRole = (!item.role && !item.roles) ||
+                            (item.role && user?.roles?.includes(item.role)) ||
+                            (item.roles && item.roles.some(r => user?.roles?.includes(r)));
 
                         if (!hasRole) return null;
 
@@ -124,7 +150,9 @@ const DashboardLayout = () => {
                                 {item.subItems && (
                                     <div className="ml-8 mt-1 space-y-1">
                                         {item.subItems.map(subItem => {
-                                            const hasSubRole = !subItem.role || user?.roles?.some(r => r === subItem.role);
+                                            const hasSubRole = (!subItem.role && !subItem.roles) ||
+                                                (subItem.role && user?.roles?.includes(subItem.role)) ||
+                                                (subItem.roles && subItem.roles.some(r => user?.roles?.includes(r)));
                                             if (!hasSubRole) return null;
                                             return (
                                                 <Link

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { employeeAPI, userAPI } from '../services/api';
 import { toast } from 'react-toastify';
 import { ArrowLeft, Save, User, Mail, Phone, MapPin, Briefcase, DollarSign } from 'lucide-react';
 
 const AddEmployee = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         employeeCode: '',
@@ -33,6 +34,22 @@ const AddEmployee = () => {
     useEffect(() => {
         fetchUsers();
     }, []);
+
+    useEffect(() => {
+        if (location.state?.linkedUser) {
+            const u = location.state.linkedUser;
+            const realId = u.id.replace('user-', '');
+            const names = (u.fullName || '').split(' ');
+            setFormData(prev => ({
+                ...prev,
+                userId: realId,
+                email: u.email || '',
+                firstName: names[0] || '',
+                lastName: names.slice(1).join(' ') || '',
+                // Don't auto-set SYS code, let them choose a real EMP code
+            }));
+        }
+    }, [location.state]);
 
     const fetchUsers = async () => {
         try {
@@ -84,8 +101,14 @@ const AddEmployee = () => {
                     <ArrowLeft size={24} />
                 </button>
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Add New Employee</h1>
-                    <p className="text-gray-600 mt-1">Fill in the employee details below</p>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                        {location.state?.linkedUser ? 'Complete Employee Profile' : 'Add New Employee'}
+                    </h1>
+                    <p className="text-gray-600 mt-1">
+                        {location.state?.linkedUser
+                            ? `Update details for ${location.state.linkedUser.fullName}`
+                            : 'Fill in the employee details below'}
+                    </p>
                 </div>
             </div>
 

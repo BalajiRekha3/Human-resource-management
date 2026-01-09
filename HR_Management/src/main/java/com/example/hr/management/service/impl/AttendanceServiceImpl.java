@@ -181,6 +181,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AttendanceResponseDTO getAttendanceById(Long id) {
         Attendance attendance = attendanceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Attendance record not found with id: " + id));
@@ -188,6 +189,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AttendanceResponseDTO getTodayAttendance(Long employeeId) {
         Attendance attendance = attendanceRepository.findByEmployeeIdAndAttendanceDate(employeeId, LocalDate.now())
                 .orElse(null);
@@ -200,6 +202,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AttendanceResponseDTO> getEmployeeAttendance(Long employeeId) {
         return attendanceRepository.findByEmployeeIdOrderByAttendanceDateDesc(employeeId)
                 .stream()
@@ -208,6 +211,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AttendanceResponseDTO> getAttendanceByDate(LocalDate date) {
         return attendanceRepository.findByAttendanceDate(date)
                 .stream()
@@ -216,6 +220,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AttendanceResponseDTO> getMonthlyAttendance(Long employeeId, LocalDate startDate, LocalDate endDate) {
         return attendanceRepository.getMonthlyAttendance(employeeId, startDate, endDate)
                 .stream()
@@ -224,6 +229,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AttendanceSummaryDTO getAttendanceSummary(Long employeeId, LocalDate startDate, LocalDate endDate) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + employeeId));

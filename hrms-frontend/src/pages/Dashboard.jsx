@@ -12,7 +12,7 @@ const Dashboard = () => {
         leaveBalance: [],
         lastSalary: null,
     });
-    const { user, employeeId, isAdmin } = useAuth();
+    const { user, employeeId, isAdmin, isHR } = useAuth();
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -24,42 +24,69 @@ const Dashboard = () => {
             const today = new Date().toISOString().split('T')[0];
             const currentYear = new Date().getFullYear();
 
-            if (isAdmin) {
-                const [activeCount, itCount, hrCount, allEmployees, todayAttendance] = await Promise.all([
-                    employeeAPI.getActiveCount(),
-                    employeeAPI.getDeptCount('IT'),
-                    employeeAPI.getDeptCount('HR'),
-                    employeeAPI.getAll(),
-                    attendanceAPI.getByDate(today),
-                ]);
+            if (isAdmin || isHR) {
+                // Fetch Employees and Attendance
+                // We calculate counts on frontend to avoid dependency on missing backend 'count' endpoints
+                // Fetch Employees first (Reliable)
+                let allEmployees = [];
+                try {
+                    const employeesRes = await employeeAPI.getAll();
+                    allEmployees = employeesRes.data || [];
+                } catch (empErr) {
+                    console.error("Error fetching employees:", empErr);
+                }
 
-                const presentCount = todayAttendance.data.data.filter(a => a.status === 'PRESENT').length;
-                const absentCount = todayAttendance.data.data.filter(a => a.status === 'ABSENT').length;
+                // Fetch Attendance separately (Prone to 500 Lob stream error)
+                let attendanceList = [];
+                try {
+                    const attendanceRes = await attendanceAPI.getByDate(today);
+                    if (Array.isArray(attendanceRes.data)) {
+                        attendanceList = attendanceRes.data;
+                    } else if (attendanceRes.data && Array.isArray(attendanceRes.data.data)) {
+                        attendanceList = attendanceRes.data.data;
+                    }
+                } catch (attErr) {
+                    console.error("Error fetching attendance:", attErr);
+                    // If attendance fails, we just show 0 for present/absent but keep employee stats
+                }
+
+                // Calculate Stats
+                const activeCount = allEmployees.filter(e => e.employmentStatus === 'ACTIVE').length;
+                const itCount = allEmployees.filter(e => e.department === 'IT').length;
+                const hrCount = allEmployees.filter(e => e.department === 'HR').length;
+
+                const presentCount = attendanceList.filter(a => a.status === 'PRESENT').length;
+                const absentCount = attendanceList.filter(a => a.status === 'ABSENT').length;
 
                 setStats(prev => ({
                     ...prev,
-                    totalEmployees: allEmployees.data.length,
-                    activeEmployees: activeCount.data.activeEmployees,
-                    itDept: itCount.data.departmentEmployeeCount,
-                    hrDept: hrCount.data.departmentEmployeeCount,
+                    totalEmployees: allEmployees.length,
+                    activeEmployees: activeCount,
+                    itDept: itCount,
+                    hrDept: hrCount,
                     presentToday: presentCount,
                     absentToday: absentCount,
                 }));
             } else if (employeeId) {
                 // Employee View Data
-                const [balances, payrolls] = await Promise.all([
-                    leaveBalanceAPI.getAllForEmployee(employeeId, currentYear),
-                    payrollAPI.getEmployeePayrolls(employeeId)
-                ]);
+                try {
+                    const [balances, payrolls] = await Promise.all([
+                        leaveBalanceAPI.getAllForEmployee(employeeId, currentYear),
+                        payrollAPI.getEmployeePayrolls(employeeId)
+                    ]);
 
-                setStats(prev => ({
-                    ...prev,
-                    leaveBalance: balances.data.data || [],
-                    lastSalary: payrolls.data.data?.[0] || null
-                }));
+                    setStats(prev => ({
+                        ...prev,
+                        leaveBalance: balances.data.data || [],
+                        lastSalary: payrolls.data.data?.[0] || null
+                    }));
+                } catch (empError) {
+                    console.error("Error fetching employee specific data", empError);
+                }
             }
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
+            // Don't show empty stats on error, keep defaults (0)
         } finally {
             setLoading(false);
         }
@@ -96,8 +123,8 @@ const Dashboard = () => {
                 <p className="text-gray-600 mt-2">Here's what's happening today</p>
             </div>
 
-            {/* Admin Dashboard */}
-            {isAdmin ? (
+            {/* Admin/HR Dashboard */}
+            {isAdmin || isHR ? (
                 <div className="space-y-8">
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">

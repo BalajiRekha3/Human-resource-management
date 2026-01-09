@@ -113,8 +113,9 @@ export const leaveService = {
     // Approve Leave
     approveLeave: async (leaveId, approverEmployeeId) => {
         try {
+            const empId = (approverEmployeeId && approverEmployeeId !== 'null' && approverEmployeeId !== 'undefined') ? approverEmployeeId : '';
             const response = await axios.put(
-                `${API_BASE_URL}/leaves/${leaveId}/approve?approverEmployeeId=${approverEmployeeId}`,
+                `${API_BASE_URL}/leaves/${leaveId}/approve?approverEmployeeId=${empId}`,
                 {},
                 { headers: getAuthHeader() }
             );
@@ -125,10 +126,11 @@ export const leaveService = {
     },
 
     // Reject Leave
-    rejectLeave: async (leaveId, rejectionReason) => {
+    rejectLeave: async (leaveId, rejectionReason, approverEmployeeId) => {
         try {
+            const empId = (approverEmployeeId && approverEmployeeId !== 'null' && approverEmployeeId !== 'undefined') ? approverEmployeeId : '';
             const response = await axios.put(
-                `${API_BASE_URL}/leaves/${leaveId}/reject?rejectionReason=${encodeURIComponent(rejectionReason)}`,
+                `${API_BASE_URL}/leaves/${leaveId}/reject?rejectionReason=${encodeURIComponent(rejectionReason)}&approverEmployeeId=${empId}`,
                 {},
                 { headers: getAuthHeader() }
             );
@@ -153,6 +155,9 @@ export const leaveService = {
 
     // Get Employee's Leaves
     getEmployeeLeaves: async (employeeId) => {
+        if (!employeeId || employeeId === 'null' || employeeId === 'undefined') {
+            throw new Error('Invalid employee ID');
+        }
         try {
             const response = await axios.get(
                 `${API_BASE_URL}/leaves/employee/${employeeId}`,
@@ -182,6 +187,23 @@ export const leaveService = {
         try {
             const response = await axios.get(
                 `${API_BASE_URL}/leaves/pending`,
+                { headers: getAuthHeader() }
+            );
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Get All Leaves (with optional status filter)
+    getAllLeaves: async (status) => {
+        try {
+            const url = status && status !== 'ALL'
+                ? `${API_BASE_URL}/leaves?status=${status}`
+                : `${API_BASE_URL}/leaves`;
+
+            const response = await axios.get(
+                url,
                 { headers: getAuthHeader() }
             );
             return response.data;

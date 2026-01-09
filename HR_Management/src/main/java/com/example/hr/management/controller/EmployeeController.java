@@ -2,6 +2,7 @@ package com.example.hr.management.controller;
 
 import com.example.hr.management.dto.EmployeeRequestDTO;
 import com.example.hr.management.dto.EmployeeResponseDTO;
+import com.example.hr.management.dto.ProfileUpdateRequestDTO;
 import com.example.hr.management.service.EmployeeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,10 +39,36 @@ public class EmployeeController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{id}/profile")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'EMPLOYEE')")
+    public ResponseEntity<EmployeeResponseDTO> updateProfile(
+            @PathVariable Long id,
+            @RequestBody ProfileUpdateRequestDTO profileUpdateRequestDTO) {
+        EmployeeResponseDTO response = employeeService.updateProfile(id, profileUpdateRequestDTO);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/profile-image")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'EMPLOYEE')")
+    public ResponseEntity<EmployeeResponseDTO> uploadProfileImage(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> imageData) {
+        String base64Image = imageData.get("profileImage");
+        EmployeeResponseDTO response = employeeService.updateProfileImage(id, base64Image);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'MANAGER', 'EMPLOYEE')")
     public ResponseEntity<EmployeeResponseDTO> getEmployeeById(@PathVariable Long id) {
         EmployeeResponseDTO response = employeeService.getEmployeeById(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/user/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'MANAGER', 'EMPLOYEE')")
+    public ResponseEntity<EmployeeResponseDTO> getEmployeeByUserId(@PathVariable Long userId) {
+        EmployeeResponseDTO response = employeeService.getEmployeeByUserId(userId);
         return ResponseEntity.ok(response);
     }
 

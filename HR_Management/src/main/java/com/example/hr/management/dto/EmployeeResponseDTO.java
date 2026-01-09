@@ -24,6 +24,7 @@ public class EmployeeResponseDTO {
     private LocalDate dateOfBirth;
     private Integer age;
     private String gender;
+    private String profileImage;
     private String address;
     private String city;
     private String state;

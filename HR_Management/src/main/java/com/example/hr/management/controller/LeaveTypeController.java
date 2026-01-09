@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/leave-types")
 @RequiredArgsConstructor
-//@CrossOrigin(origins = "*", allowedHeaders = "*")
+// @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class LeaveTypeController {
 
     private final LeaveTypeRepository leaveTypeRepository;
@@ -57,6 +57,7 @@ public class LeaveTypeController {
 
     // Get active leave types
     @GetMapping("/active")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'HR', 'EMPLOYEE')")
     public ResponseEntity<?> getActiveLeaveTypes() {
         try {
             List<LeaveTypeDTO> leaveTypes = leaveTypeRepository.findByIsActive(true)

@@ -2,6 +2,7 @@ package com.example.hr.management.service.impl;
 
 import com.example.hr.management.dto.EmployeeRequestDTO;
 import com.example.hr.management.dto.EmployeeResponseDTO;
+import com.example.hr.management.dto.ProfileUpdateRequestDTO;
 import com.example.hr.management.entity.Employee;
 import com.example.hr.management.entity.User;
 import com.example.hr.management.exception.BadRequestException;
@@ -120,9 +121,54 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional
+    public EmployeeResponseDTO updateProfile(Long id, ProfileUpdateRequestDTO dto) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + id));
+
+        employee.setPhoneNumber(dto.getPhoneNumber());
+        employee.setDateOfBirth(dto.getDateOfBirth());
+        employee.setGender(dto.getGender());
+        if (dto.getProfileImage() != null) {
+            employee.setProfileImage(dto.getProfileImage());
+        }
+        employee.setAddress(dto.getAddress());
+        employee.setCity(dto.getCity());
+        employee.setState(dto.getState());
+        employee.setPostalCode(dto.getPostalCode());
+        employee.setCountry(dto.getCountry());
+        employee.setUpdatedAt(LocalDateTime.now());
+
+        Employee updatedEmployee = employeeRepository.save(employee);
+        return mapToResponseDTO(updatedEmployee);
+    }
+
+    @Override
+    @Transactional
+    public EmployeeResponseDTO updateProfileImage(Long id, String base64Image) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + id));
+
+        employee.setProfileImage(base64Image);
+        employee.setUpdatedAt(LocalDateTime.now());
+
+        Employee updatedEmployee = employeeRepository.save(employee);
+        return mapToResponseDTO(updatedEmployee);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public EmployeeResponseDTO getEmployeeById(Long id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + id));
+        return mapToResponseDTO(employee);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EmployeeResponseDTO getEmployeeByUserId(Long userId) {
+        Employee employee = employeeRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("No employee profile found for user id: " + userId));
         return mapToResponseDTO(employee);
     }
 
@@ -190,6 +236,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .phoneNumber(employee.getPhoneNumber())
                 .dateOfBirth(employee.getDateOfBirth())
                 .gender(employee.getGender())
+                .profileImage(employee.getProfileImage())
                 .address(employee.getAddress())
                 .city(employee.getCity())
                 .state(employee.getState())

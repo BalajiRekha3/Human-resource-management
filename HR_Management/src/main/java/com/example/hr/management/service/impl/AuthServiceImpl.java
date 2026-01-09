@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
@@ -50,6 +51,18 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByUsername(loginRequest.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        // Auto-link logic: If user is not linked to an employee, try to find an
+        // employee by email
+        Long employeeId = employeeRepository.findByUserId(user.getId()).map(e -> e.getId()).orElse(null);
+        if (employeeId == null) {
+            employeeId = employeeRepository.findByEmailIgnoreCase(user.getEmail())
+                    .map(e -> {
+                        e.setUser(user);
+                        employeeRepository.save(e);
+                        return e.getId();
+                    }).orElse(null);
+        }
+
         Set<String> roles = user.getRoles().stream()
                 .map(Role::getName)
                 .collect(Collectors.toSet());
@@ -58,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
                 .token(token)
                 .type("Bearer")
                 .id(user.getId())
-                .employeeId(employeeRepository.findByUserId(user.getId()).map(e -> e.getId()).orElse(null))
+                .employeeId(employeeId)
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .roles(roles)

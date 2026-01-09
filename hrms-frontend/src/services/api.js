@@ -33,9 +33,12 @@ export const authAPI = {
 export const employeeAPI = {
     getAll: () => api.get('/employees'),
     getById: (id) => api.get(`/employees/${id}`),
+    getByUserId: (userId) => api.get(`/employees/user/${userId}`),
     getByCode: (code) => api.get(`/employees/code/${code}`),
     create: (data) => api.post('/employees', data),
     update: (id, data) => api.put(`/employees/${id}`, data),
+    updateProfile: (id, data) => api.put(`/employees/${id}/profile`, data),
+    uploadProfileImage: (id, base64Image) => api.post(`/employees/${id}/profile-image`, { profileImage: base64Image }),
     delete: (id) => api.delete(`/employees/${id}`),
     search: (keyword) => api.get(`/employees/search?keyword=${keyword}`),
     getByDepartment: (dept) => api.get(`/employees/department/${dept}`),
@@ -118,6 +121,8 @@ export const payrollAPI = {
 
 export const userAPI = {
     getAll: () => api.get('/users'),
+    delete: (id) => api.delete(`/users/${id}`),
+    update: (id, data) => api.put(`/users/${id}`, data),
 };
 
 export default api;

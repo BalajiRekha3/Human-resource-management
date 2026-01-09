@@ -64,11 +64,22 @@ public class LeaveServiceImpl implements LeaveService {
             throw new BadRequestException("Leave already approved for these dates");
         }
 
-        // Check leave balance
+        // Check leave balance - auto-create if doesn't exist
         int year = leaveRequestDTO.getFromDate().getYear();
         LeaveBalance balance = leaveBalanceRepository
                 .findByEmployeeIdAndLeaveTypeIdAndYear(employee.getId(), leaveType.getId(), year)
-                .orElseThrow(() -> new ResourceNotFoundException("Leave balance not found for this year"));
+                .orElseGet(() -> {
+                    // Auto-create balance if not found
+                    LeaveBalance newBalance = new LeaveBalance();
+                    newBalance.setEmployee(employee);
+                    newBalance.setLeaveType(leaveType);
+                    newBalance.setYear(year);
+                    newBalance.setTotalDays(leaveType.getTotalDays());
+                    newBalance.setUsedDays(0);
+                    newBalance.setPendingDays(0);
+                    newBalance.setRemainingDays(leaveType.getTotalDays());
+                    return leaveBalanceRepository.save(newBalance);
+                });
 
         if (balance.getRemainingDays() < numberOfDays) {
             throw new BadRequestException("Insufficient leave balance. Available: " +
@@ -126,7 +137,7 @@ public class LeaveServiceImpl implements LeaveService {
     }
 
     @Override
-    public LeaveResponseDTO rejectLeave(Long leaveId, String rejectionReason) {
+    public LeaveResponseDTO rejectLeave(Long leaveId, String rejectionReason, Long approverEmployeeId) {
         Leave leave = leaveRepository.findById(leaveId)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave not found"));
 
@@ -136,6 +147,7 @@ public class LeaveServiceImpl implements LeaveService {
 
         leave.setStatus(LeaveStatus.REJECTED);
         leave.setRejectionReason(rejectionReason);
+        leave.setApprovedBy(approverEmployeeId);
         leave.setApprovalDate(LocalDate.now());
 
         Leave updatedLeave = leaveRepository.save(leave);
@@ -156,6 +168,7 @@ public class LeaveServiceImpl implements LeaveService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<LeaveResponseDTO> getEmployeeLeaves(Long employeeId) {
         employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
@@ -167,6 +180,7 @@ public class LeaveServiceImpl implements LeaveService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<LeaveResponseDTO> getEmployeeLeavesbyYear(Long employeeId, Integer year) {
         employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
@@ -178,6 +192,7 @@ public class LeaveServiceImpl implements LeaveService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<LeaveResponseDTO> getPendingLeaves() {
         return leaveRepository.findByStatus(LeaveStatus.PENDING)
                 .stream()
@@ -186,6 +201,7 @@ public class LeaveServiceImpl implements LeaveService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public LeaveResponseDTO getLeaveById(Long leaveId) {
         Leave leave = leaveRepository.findById(leaveId)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave not found"));
@@ -195,9 +211,28 @@ public class LeaveServiceImpl implements LeaveService {
 
     @Override
     public LeaveBalanceDTO getLeaveBalance(Long employeeId, Long leaveTypeId, Integer year) {
+        // Try to find existing balance
         LeaveBalance balance = leaveBalanceRepository
                 .findByEmployeeIdAndLeaveTypeIdAndYear(employeeId, leaveTypeId, year)
-                .orElseThrow(() -> new ResourceNotFoundException("Leave balance not found"));
+                .orElseGet(() -> {
+                    // If not found, auto-create it
+                    Employee employee = employeeRepository.findById(employeeId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+
+                    LeaveType leaveType = leaveTypeRepository.findById(leaveTypeId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Leave type not found"));
+
+                    LeaveBalance newBalance = new LeaveBalance();
+                    newBalance.setEmployee(employee);
+                    newBalance.setLeaveType(leaveType);
+                    newBalance.setYear(year);
+                    newBalance.setTotalDays(leaveType.getTotalDays());
+                    newBalance.setUsedDays(0);
+                    newBalance.setPendingDays(0);
+                    newBalance.setRemainingDays(leaveType.getTotalDays());
+
+                    return leaveBalanceRepository.save(newBalance);
+                });
 
         return mapBalanceToDTO(balance);
     }
@@ -240,15 +275,56 @@ public class LeaveServiceImpl implements LeaveService {
         }
     }
 
-    // Map Leave to Response DTO
+    @Override
+    @Transactional(readOnly = true)
+    public List<LeaveResponseDTO> getAllLeaves(LeaveStatus status) {
+        List<Leave> leaves;
+        if (status != null) {
+            leaves = leaveRepository.findByStatus(status);
+        } else {
+            leaves = leaveRepository.findAll();
+        }
+
+        return leaves.stream()
+                // Sort by ID desc (newest first) with null safety
+                .sorted((l1, l2) -> {
+                    if (l1.getId() == null)
+                        return 1;
+                    if (l2.getId() == null)
+                        return -1;
+                    return l2.getId().compareTo(l1.getId());
+                })
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Map Leave to Response DTO with Robust Null Safety
     private LeaveResponseDTO mapToResponseDTO(Leave leave) {
+        if (leave == null)
+            return null;
+
         LeaveResponseDTO dto = new LeaveResponseDTO();
         dto.setId(leave.getId());
-        dto.setEmployeeId(leave.getEmployee().getId());
-        dto.setEmployeeName(leave.getEmployee().getFirstName() + " " + leave.getEmployee().getLastName());
-        dto.setEmployeeEmail(leave.getEmployee().getEmail());
-        dto.setLeaveTypeId(leave.getLeaveType().getId());
-        dto.setLeaveTypeName(leave.getLeaveType().getName());
+
+        // Safe Employee Mapping
+        if (leave.getEmployee() != null) {
+            dto.setEmployeeId(leave.getEmployee().getId());
+            dto.setEmployeeName(leave.getEmployee().getFirstName() + " " + leave.getEmployee().getLastName());
+            dto.setEmployeeEmail(leave.getEmployee().getEmail());
+            dto.setEmployeeCode(leave.getEmployee().getEmployeeCode());
+            dto.setEmployeeProfileImage(leave.getEmployee().getProfileImage());
+        } else {
+            dto.setEmployeeName("Unknown Employee");
+        }
+
+        // Safe Leave Type Mapping
+        if (leave.getLeaveType() != null) {
+            dto.setLeaveTypeId(leave.getLeaveType().getId());
+            dto.setLeaveTypeName(leave.getLeaveType().getName());
+        } else {
+            dto.setLeaveTypeName("Unknown Type");
+        }
+
         dto.setFromDate(leave.getFromDate());
         dto.setToDate(leave.getToDate());
         dto.setNumberOfDays(leave.getNumberOfDays());
@@ -264,6 +340,7 @@ public class LeaveServiceImpl implements LeaveService {
             Employee approver = employeeRepository.findById(leave.getApprovedBy()).orElse(null);
             if (approver != null) {
                 dto.setApproverName(approver.getFirstName() + " " + approver.getLastName());
+                dto.setApproverDesignation(approver.getDesignation());
             }
         }
 

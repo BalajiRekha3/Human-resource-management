@@ -25,8 +25,13 @@ public class LeaveResponseDTO {
     private LeaveStatus status;
     private Long approvedBy;
     private String approverName;
+    private String approverDesignation;
     private LocalDate approvalDate;
     private String rejectionReason;
     private LocalDate createdAt;
     private LocalDate updatedAt;
+
+    // Additional Employee Details
+    private String employeeCode;
+    private String employeeProfileImage;
 }

@@ -100,13 +100,15 @@ public class SecurityConfig {
 
                                                 // Leave Management - All authenticated users
                                                 .requestMatchers("/api/leaves/**").authenticated()
-                                                .requestMatchers("/api/leave-types/**").hasAnyRole("ADMIN", "HR")
+                                                .requestMatchers("/api/leave-types/**")
+                                                .hasAnyRole("ADMIN", "HR", "EMPLOYEE")
                                                 .requestMatchers("/api/leave-balances/**").authenticated()
 
                                                 // Employee endpoints - ADMIN, HR, EMPLOYEE
                                                 .requestMatchers("/api/employee/**")
                                                 .hasAnyRole("ADMIN", "HR", "EMPLOYEE")
-                                                .requestMatchers("/api/employees/**").hasAnyRole("ADMIN", "HR")
+                                                .requestMatchers("/api/employees/**")
+                                                .hasAnyRole("ADMIN", "HR", "EMPLOYEE")
                                                 .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "HR")
 
                                                 // Attendance endpoints

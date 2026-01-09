@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/leaves")
 @RequiredArgsConstructor
-//@CrossOrigin(origins = "*", allowedHeaders = "*")
+// @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class LeaveController {
 
     private final LeaveService leaveService;
@@ -37,7 +37,8 @@ public class LeaveController {
 
     // Approve leave
     @PutMapping("/{id}/approve")
-    public ResponseEntity<?> approveLeave(@PathVariable Long id, @RequestParam Long approverEmployeeId) {
+    public ResponseEntity<?> approveLeave(@PathVariable Long id,
+            @RequestParam(required = false) Long approverEmployeeId) {
         try {
             LeaveResponseDTO approvedLeave = leaveService.approveLeave(id, approverEmployeeId);
             return ResponseEntity.ok(new ApiResponse<>(true, "Leave approved successfully", approvedLeave));
@@ -52,9 +53,10 @@ public class LeaveController {
 
     // Reject leave
     @PutMapping("/{id}/reject")
-    public ResponseEntity<?> rejectLeave(@PathVariable Long id, @RequestParam String rejectionReason) {
+    public ResponseEntity<?> rejectLeave(@PathVariable Long id, @RequestParam String rejectionReason,
+            @RequestParam(required = false) Long approverEmployeeId) {
         try {
-            LeaveResponseDTO rejectedLeave = leaveService.rejectLeave(id, rejectionReason);
+            LeaveResponseDTO rejectedLeave = leaveService.rejectLeave(id, rejectionReason, approverEmployeeId);
             return ResponseEntity.ok(new ApiResponse<>(true, "Leave rejected successfully", rejectedLeave));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -98,6 +100,27 @@ public class LeaveController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(false, "Error retrieving pending leaves: " + e.getMessage(), null));
+        }
+    }
+
+    // Get all leaves (with optional filter)
+    @GetMapping
+    public ResponseEntity<?> getAllLeaves(@RequestParam(required = false) String status) {
+        try {
+            com.example.hr.management.entity.LeaveStatus leaveStatus = null;
+            if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
+                try {
+                    leaveStatus = com.example.hr.management.entity.LeaveStatus.valueOf(status.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    // Ignore invalid status and return all
+                }
+            }
+
+            List<LeaveResponseDTO> leaves = leaveService.getAllLeaves(leaveStatus);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Leaves retrieved successfully", leaves));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "Error retrieving leaves: " + e.getMessage(), null));
         }
     }
 }

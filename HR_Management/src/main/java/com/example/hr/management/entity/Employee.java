@@ -40,6 +40,10 @@ public class Employee {
     @Column(length = 10)
     private String gender;
 
+    @Lob
+    @Column(name = "profile_image", columnDefinition = "TEXT")
+    private String profileImage;
+
     @Column(length = 500)
     private String address;
 

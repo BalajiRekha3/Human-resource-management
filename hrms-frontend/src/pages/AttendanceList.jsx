@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { attendanceAPI, employeeAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import {
     Clock,
     LogOut,
@@ -46,16 +47,22 @@ const AttendanceList = () => {
     const [recordToDelete, setRecordToDelete] = useState(null);
     const [clockingIn, setClockingin] = useState(false);
 
+    const { isAdmin, isHR, isEmployee, employeeId: currentEmployeeId } = useAuth();
+
     const fetchedRef = useRef(false);
 
     useEffect(() => {
         if (fetchedRef.current) return;
         fetchedRef.current = true;
 
-        console.log('📍 Initializing Attendance page');
-        fetchEmployees();
-        fetchTodayAttendance();
-    }, []);
+        if (isAdmin || isHR) {
+            fetchEmployees();
+            fetchTodayAttendance();
+        } else if (isEmployee && currentEmployeeId) {
+            setSelectedEmployee(currentEmployeeId);
+            // fetchMonthlyAttendance will be triggered by the effect on selectedEmployee
+        }
+    }, [isAdmin, isHR, isEmployee, currentEmployeeId]);
 
     useEffect(() => {
         if (selectedEmployee) {
@@ -393,33 +400,13 @@ const AttendanceList = () => {
                     );
                 },
             },
-            {
-                id: 'actions',
-                header: 'Actions',
-                cell: ({ row }) => (
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setViewDetails(row.original)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                            title="View Details"
-                        >
-                            <Eye size={18} />
-                        </button>
-                        <button
-                            onClick={() => {
-                                setRecordToDelete(row.original);
-                                setShowDeleteModal(true);
-                            }}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                            title="Delete"
-                        >
-                            <Trash2 size={18} />
-                        </button>
-                    </div>
-                ),
-            },
-        ],
-        []
+        ].filter(col => {
+            if (col.id === 'actions') {
+                return isAdmin || isHR;
+            }
+            return true;
+        }),
+        [isAdmin, isHR]
     );
 
     const table = useReactTable({
@@ -457,7 +444,12 @@ const AttendanceList = () => {
                         Export
                     </button>
                     <button
-                        onClick={() => setShowClockModal(true)}
+                        onClick={() => {
+                            if (isEmployee && currentEmployeeId) {
+                                setSelectedEmployeeForClock(currentEmployeeId);
+                            }
+                            setShowClockModal(true);
+                        }}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm"
                     >
                         <Clock size={20} />
@@ -470,18 +462,20 @@ const AttendanceList = () => {
             <div className="bg-white rounded-xl shadow-sm p-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Employee Filter */}
-                    <select
-                        value={selectedEmployee}
-                        onChange={(e) => setSelectedEmployee(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option value="">Today's Attendance</option>
-                        {employees.map((emp) => (
-                            <option key={emp.id} value={emp.id}>
-                                {emp.fullName} ({emp.employeeCode})
-                            </option>
-                        ))}
-                    </select>
+                    {(isAdmin || isHR) && (
+                        <select
+                            value={selectedEmployee}
+                            onChange={(e) => setSelectedEmployee(e.target.value)}
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Today's Attendance</option>
+                            {employees.map((emp) => (
+                                <option key={emp.id} value={emp.id}>
+                                    {emp.fullName} ({emp.employeeCode})
+                                </option>
+                            ))}
+                        </select>
+                    )}
 
                     {/* Month Filter */}
                     {selectedEmployee && (
@@ -494,13 +488,15 @@ const AttendanceList = () => {
                     )}
 
                     {/* Search */}
-                    <input
-                        type="text"
-                        placeholder="Search attendance..."
-                        value={globalFilter ?? ''}
-                        onChange={(e) => setGlobalFilter(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
+                    {(isAdmin || isHR) && (
+                        <input
+                            type="text"
+                            placeholder="Search attendance..."
+                            value={globalFilter ?? ''}
+                            onChange={(e) => setGlobalFilter(e.target.value)}
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                    )}
                 </div>
             </div>
 
@@ -696,26 +692,34 @@ const AttendanceList = () => {
                         </div>
 
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Select Employee *
-                                </label>
-                                <select
-                                    value={selectedEmployeeForClock || ''}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        setSelectedEmployeeForClock(value ? parseInt(value) : null);
-                                    }}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                >
-                                    <option value="">Choose an employee...</option>
-                                    {employees.map((emp) => (
-                                        <option key={emp.id} value={emp.id}>
-                                            {emp.fullName} ({emp.employeeCode})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            {(isAdmin || isHR) ? (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Select Employee *
+                                    </label>
+                                    <select
+                                        value={selectedEmployeeForClock || ''}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setSelectedEmployeeForClock(value ? parseInt(value) : null);
+                                        }}
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    >
+                                        <option value="">Choose an employee...</option>
+                                        {employees.map((emp) => (
+                                            <option key={emp.id} value={emp.id}>
+                                                {emp.fullName} ({emp.employeeCode})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : (
+                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+                                    <p className="text-sm text-blue-700 font-medium">Employee:</p>
+                                    <p className="text-lg font-bold text-blue-900">{user?.username}</p>
+                                    <p className="text-xs text-blue-600 mt-1">Ready to clock in/out for today.</p>
+                                </div>
+                            )}
 
                             {selectedEmployeeForClock && (
                                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">

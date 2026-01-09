@@ -65,6 +65,8 @@ export const AuthProvider = ({ children }) => {
         user,
         employeeId: user?.employeeId,
         isAdmin: user?.roles?.includes('ROLE_ADMIN'),
+        isHR: user?.roles?.includes('ROLE_HR'),
+        isEmployee: user?.roles?.includes('ROLE_EMPLOYEE'),
         token,
         login,
         logout,

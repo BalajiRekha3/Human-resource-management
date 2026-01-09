@@ -13,6 +13,7 @@ import java.util.Set;
 @Builder
 public class LoginResponseDTO {
     private String token;
+    @Builder.Default
     private String type = "Bearer";
     private Long id;
     private Long employeeId;
