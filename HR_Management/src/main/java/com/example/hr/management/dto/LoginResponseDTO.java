@@ -14,6 +14,8 @@ import java.util.Set;
 public class LoginResponseDTO {
     private String token;
     private String type = "Bearer";
+    private Long id;
+    private Long employeeId;
     private String username;
     private String email;
     private Set<String> roles;

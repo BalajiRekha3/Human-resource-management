@@ -80,5 +80,32 @@ export const attendanceAPI = {
     deleteAttendance: (id) => api.delete(`/attendance/${id}`),
 };
 
+// Leave Type APIs
+export const leaveTypeAPI = {
+    getAll: () => api.get('/leave-types'),
+    getActive: () => api.get('/leave-types/active'),
+    getById: (id) => api.get(`/leave-types/${id}`),
+    create: (data) => api.post('/leave-types/createLeavType', data), // Note: typo in backend URL
+    update: (id, data) => api.put(`/leave-types/${id}`, data),
+    delete: (id) => api.delete(`/leave-types/${id}`),
+};
+
+// Leave APIs
+export const leaveAPI = {
+    apply: (data) => api.post('/leaves/apply', data),
+    approve: (id, approverId) => api.put(`/leaves/${id}/approve?approverEmployeeId=${approverId}`),
+    reject: (id, reason) => api.put(`/leaves/${id}/reject?rejectionReason=${reason}`),
+    getEmployeeLeaves: (employeeId) => api.get(`/leaves/employee/${employeeId}`),
+    getPendingLeaves: () => api.get('/leaves/pending'),
+    getById: (id) => api.get(`/leaves/${id}`),
+};
+
+// Leave Balance APIs
+export const leaveBalanceAPI = {
+    get: (empId, typeId, year) => api.get(`/leave-balances/${empId}/${typeId}/${year}`),
+    getAllForEmployee: (empId, year) => api.get(`/leave-balances/employee/${empId}/year/${year}`),
+    initialize: (empId, year) => api.post(`/leave-balances/initialize/${empId}/${year}`),
+};
+
 
 export default api;

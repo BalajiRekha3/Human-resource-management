@@ -28,7 +28,17 @@ const DashboardLayout = () => {
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { name: 'Employees', path: '/dashboard/employees', icon: Users },
         { name: 'Attendance', path: '/dashboard/attendance', icon: Clock },
-        { name: 'Leave', path: '/dashboard/leave', icon: Calendar },
+        {
+            name: 'Leave',
+            path: '/dashboard/leave',
+            icon: Calendar,
+            subItems: [
+                { name: 'My Leaves', path: '/dashboard/leave' },
+                { name: 'Apply Leave', path: '/dashboard/leave/apply' },
+                { name: 'Approve Leaves', path: '/dashboard/leave/approve', role: 'ROLE_ADMIN' },
+                { name: 'Leave Types', path: '/dashboard/leave/types', role: 'ROLE_ADMIN' }
+            ]
+        },
         { name: 'Reports', path: '/dashboard/reports', icon: FileText },
         { name: 'Settings', path: '/dashboard/settings', icon: Settings },
     ];
@@ -90,19 +100,45 @@ const DashboardLayout = () => {
                 <nav className="p-4 space-y-1">
                     {menuItems.map((item) => {
                         const Icon = item.icon;
+                        const hasRole = !item.role || user?.roles?.some(r => r === item.role);
+
+                        if (!hasRole) return null;
+
                         return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                onClick={() => setSidebarOpen(false)}
-                                className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${isActive(item.path)
+                            <div key={item.name}>
+                                <Link
+                                    to={item.path}
+                                    onClick={() => setSidebarOpen(false)}
+                                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${isActive(item.path)
                                         ? 'bg-blue-50 text-blue-600'
                                         : 'text-gray-700 hover:bg-gray-50'
-                                    }`}
-                            >
-                                <Icon size={20} />
-                                <span className="font-medium">{item.name}</span>
-                            </Link>
+                                        }`}
+                                >
+                                    <Icon size={20} />
+                                    <span className="font-medium">{item.name}</span>
+                                </Link>
+                                {item.subItems && (
+                                    <div className="ml-8 mt-1 space-y-1">
+                                        {item.subItems.map(subItem => {
+                                            const hasSubRole = !subItem.role || user?.roles?.some(r => r === subItem.role);
+                                            if (!hasSubRole) return null;
+                                            return (
+                                                <Link
+                                                    key={subItem.path}
+                                                    to={subItem.path}
+                                                    onClick={() => setSidebarOpen(false)}
+                                                    className={`block px-4 py-2 text-sm rounded-lg transition-colors ${isActive(subItem.path)
+                                                        ? 'text-blue-600 bg-blue-50'
+                                                        : 'text-gray-600 hover:bg-gray-50'
+                                                        }`}
+                                                >
+                                                    {subItem.name}
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
                         );
                     })}
                 </nav>

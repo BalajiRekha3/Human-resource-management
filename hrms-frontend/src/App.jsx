@@ -10,6 +10,10 @@ import EmployeeList from './pages/EmployeeList';
 import AddEmployee from './pages/AddEmployee';
 import EditEmployee from './pages/EditEmployee';
 import AttendanceList from './pages/AttendanceList';
+import LeaveApply from './pages/ApplyLeave';
+import ApproveLeavesPage from './pages/ApproveLeavesPage';
+import MyLeavesPage from './pages/MyLeavesPage';
+import LeaveTypesPage from './pages/LeaveTypesPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 function App() {
@@ -39,6 +43,12 @@ function App() {
 
             {/* Attendance Routes */}
             <Route path="attendance" element={<AttendanceList />} />
+
+            {/* Leave Routes */}
+            <Route path="leave" element={<MyLeavesPage />} />
+            <Route path="leave/apply" element={<LeaveApply />} />
+            <Route path="leave/approve" element={<ApproveLeavesPage />} />
+            <Route path="leave/types" element={<LeaveTypesPage />} />
           </Route>
 
           {/* Catch all */}

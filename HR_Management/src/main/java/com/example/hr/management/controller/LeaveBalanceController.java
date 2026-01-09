@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/leave-balances")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*", allowedHeaders = "*")
+//@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class LeaveBalanceController {
 
     private final LeaveService leaveService;

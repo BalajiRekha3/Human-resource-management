@@ -6,6 +6,7 @@ import com.example.hr.management.entity.Role;
 import com.example.hr.management.entity.User;
 import com.example.hr.management.exception.BadRequestException;
 import com.example.hr.management.exception.ResourceNotFoundException;
+import com.example.hr.management.repository.EmployeeRepository;
 import com.example.hr.management.repository.RoleRepository;
 import com.example.hr.management.repository.UserRepository;
 import com.example.hr.management.service.AuthService;
@@ -30,6 +31,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
@@ -55,6 +57,8 @@ public class AuthServiceImpl implements AuthService {
         return LoginResponseDTO.builder()
                 .token(token)
                 .type("Bearer")
+                .id(user.getId())
+                .employeeId(employeeRepository.findByUserId(user.getId()).map(e -> e.getId()).orElse(null))
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .roles(roles)

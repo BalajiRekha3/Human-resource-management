@@ -15,13 +15,13 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/leave-types")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*", allowedHeaders = "*")
+//@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class LeaveTypeController {
 
     private final LeaveTypeRepository leaveTypeRepository;
 
     // Create leave type
-    @PostMapping
+    @PostMapping("/createLeavType")
     public ResponseEntity<?> createLeaveType(@RequestBody LeaveTypeDTO leaveTypeDTO) {
         try {
             LeaveType leaveType = new LeaveType();
