@@ -14,6 +14,7 @@ import {
     Clock,
     User,
     CreditCard,
+    DollarSign,
 } from 'lucide-react';
 
 const DashboardLayout = () => {
@@ -62,7 +63,8 @@ const DashboardLayout = () => {
         },
         { name: 'Reports', path: '/dashboard/reports', icon: FileText, roles: ['ROLE_ADMIN', 'ROLE_HR'] },
         { name: 'Holiday Calendar', path: '/dashboard/holidays', icon: Calendar },
-        { name: 'My Payslips', path: '/dashboard/payroll', icon: CreditCard },
+        { name: 'Payroll Management', path: '/dashboard/payroll', icon: DollarSign, roles: ['ROLE_ADMIN', 'ROLE_HR'] },
+        { name: 'My Payslips', path: '/dashboard/payslips', icon: FileText },
         { name: 'My Profile', path: '/dashboard/profile', icon: User },
         { name: 'Settings', path: '/dashboard/settings', icon: Settings },
     ];

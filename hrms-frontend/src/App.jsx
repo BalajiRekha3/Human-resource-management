@@ -16,6 +16,7 @@ import MyLeavesPage from './pages/MyLeavesPage';
 import LeaveTypesPage from './pages/LeaveTypesPage';
 import ProfilePage from './pages/ProfilePage';
 import MyPaySlips from './pages/MyPaySlips';
+import PayrollPage from './pages/PayrollPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import HolidayPage from './pages/HolidayPage';
@@ -67,7 +68,8 @@ function App() {
             <Route path="leave/types" element={<LeaveTypesPage />} />
 
             {/* Payroll & Profile */}
-            <Route path="payroll" element={<MyPaySlips />} />
+            <Route path="payroll" element={<PayrollPage />} />
+            <Route path="payslips" element={<MyPaySlips />} />
             <Route path="holidays" element={<HolidayPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="reports" element={<ReportsPage />} />

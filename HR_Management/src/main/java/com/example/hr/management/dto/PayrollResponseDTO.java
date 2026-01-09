@@ -22,9 +22,21 @@ public class PayrollResponseDTO {
     private LocalDate payPeriodEnd;
     private LocalDate payDate;
     private BigDecimal basicSalary;
-    private BigDecimal allowances;
+
+    // Allowances
+    private BigDecimal houseRentAllowance;
+    private BigDecimal dearnessAllowance;
+    private BigDecimal medicalAllowance;
+    private BigDecimal transportAllowance;
+    private BigDecimal specialAllowance;
+
+    // Deductions
+    private BigDecimal providentFund;
+    private BigDecimal professionalTax;
+    private BigDecimal incomeTax;
+
     private BigDecimal bonus;
-    private BigDecimal deductions;
+    private BigDecimal deductions; // Ad-hoc
     private BigDecimal netSalary;
     private Payroll.PayrollStatus status;
     private String paymentMethod;

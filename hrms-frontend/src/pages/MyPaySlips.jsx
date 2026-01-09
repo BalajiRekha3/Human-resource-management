@@ -1,31 +1,77 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { payrollAPI } from '../services/api';
-import { FileText, Download, Calendar, CreditCard, Shield, AlertCircle } from 'lucide-react';
+import { payrollAPI, employeeAPI } from '../services/api';
+import { FileText, Download, Calendar, CreditCard, Shield, AlertCircle, X, Eye } from 'lucide-react';
 import { toast } from 'react-toastify';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import PayslipDocument from '../components/payroll/PayslipDocument';
 
 const MyPaySlips = () => {
     const { employeeId } = useAuth();
     const [payrolls, setPayrolls] = useState([]);
+    const [employee, setEmployee] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [selectedPayroll, setSelectedPayroll] = useState(null);
+    const payslipRef = useRef(null);
 
     useEffect(() => {
         if (employeeId) {
-            fetchPayrolls();
+            fetchData();
         } else {
             setLoading(false);
         }
     }, [employeeId]);
 
-    const fetchPayrolls = async () => {
+    const fetchData = async () => {
         try {
-            const response = await payrollAPI.getEmployeePayrolls(employeeId);
-            setPayrolls(response.data.sort((a, b) => new Date(b.payDate) - new Date(a.payDate)));
+            const [payrollRes, employeeRes] = await Promise.all([
+                payrollAPI.getEmployeePayrolls(employeeId),
+                employeeAPI.getById(employeeId)
+            ]);
+
+            if (payrollRes.data && payrollRes.data.data) {
+                setPayrolls(payrollRes.data.data.sort((a, b) => new Date(b.payDate) - new Date(a.payDate)));
+            }
+            if (employeeRes.data) {
+                setEmployee(employeeRes.data);
+            }
         } catch (error) {
-            console.error('Error fetching payrolls:', error);
-            toast.error('Failed to load payslips');
+            console.error('Error fetching data:', error);
+            toast.error('Failed to load payslip data');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDownloadPDF = async () => {
+        if (!payslipRef.current) return;
+
+        const originalStyle = payslipRef.current.style.transform;
+        payslipRef.current.style.transform = 'scale(1)'; // Ensure correct scale for capture
+
+        try {
+            const canvas = await html2canvas(payslipRef.current, {
+                scale: 2, // Higher scale for better quality
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`Payslip_${selectedPayroll.payPeriodStart}.pdf`);
+            toast.success('Payslip downloaded successfully');
+        } catch (error) {
+            console.error('PDF generation error:', error);
+            toast.error('Failed to generate PDF');
+        } finally {
+            payslipRef.current.style.transform = originalStyle;
         }
     };
 
@@ -87,27 +133,67 @@ const MyPaySlips = () => {
                             <div className="space-y-3 mb-6 flex-1">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-500">Gross Salary</span>
-                                    <span className="font-semibold text-gray-900">₹{(payroll.basicSalary + payroll.allowances + payroll.bonus).toLocaleString()}</span>
+                                    <span className="font-semibold text-gray-900">₹{(
+                                        payroll.basicSalary +
+                                        (payroll.houseRentAllowance || 0) +
+                                        (payroll.dearnessAllowance || 0) +
+                                        (payroll.medicalAllowance || 0) +
+                                        (payroll.transportAllowance || 0) +
+                                        (payroll.specialAllowance || 0) +
+                                        (payroll.bonus || 0)
+                                    ).toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Deductions</span>
-                                    <span className="font-semibold text-red-600">-₹{payroll.deductions.toLocaleString()}</span>
-                                </div>
-                                <div className="border-t border-dashed border-gray-200 pt-3 flex justify-between">
-                                    <span className="font-bold text-gray-900">Net Payable</span>
+                                    <span className="text-gray-500">Net Payable</span>
                                     <span className="font-bold text-blue-600 text-lg">₹{payroll.netSalary.toLocaleString()}</span>
                                 </div>
                             </div>
 
                             <button
-                                onClick={() => toast.info('Download feature coming soon!')}
-                                className="w-full flex items-center justify-center gap-2 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold rounded-xl transition"
+                                onClick={() => setSelectedPayroll(payroll)}
+                                className="w-full flex items-center justify-center gap-2 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-xl transition"
                             >
-                                <Download size={18} />
-                                Download PDF
+                                <Eye size={18} />
+                                View Details
                             </button>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Payslip Modal */}
+            {selectedPayroll && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm overflow-y-auto">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl my-8 relative flex flex-col max-h-[90vh]">
+                        {/* Modal Header */}
+                        <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white z-10 rounded-t-xl">
+                            <h2 className="text-xl font-bold text-gray-800">Payslip Details</h2>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleDownloadPDF}
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                                >
+                                    <Download size={16} />
+                                    Download PDF
+                                </button>
+                                <button
+                                    onClick={() => setSelectedPayroll(null)}
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Modal Content - Scrollable */}
+                        <div className="p-8 bg-gray-50 overflow-y-auto flex-1 flex justify-center">
+                            <PayslipDocument
+                                ref={payslipRef}
+                                payroll={selectedPayroll}
+                                employee={employee}
+                            />
+                        </div>
+                    </div>
                 </div>
             )}
 

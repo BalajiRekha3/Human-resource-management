@@ -7,65 +7,57 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "payrolls")
+@Table(name = "salary_structures")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Payroll {
+public class SalaryStructure {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "employee_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id", nullable = false, unique = true)
     private Employee employee;
 
-    @Column(nullable = false)
-    private LocalDate payPeriodStart;
-
-    @Column(nullable = false)
-    private LocalDate payPeriodEnd;
-
-    @Column(nullable = false)
-    private LocalDate payDate;
-
+    // Earnings
     @Column(nullable = false)
     private BigDecimal basicSalary;
 
+    @Column(nullable = false)
     private BigDecimal houseRentAllowance; // HRA
+
+    @Column(nullable = false)
     private BigDecimal dearnessAllowance; // DA
+
+    @Column(nullable = false)
     private BigDecimal medicalAllowance;
+
+    @Column(nullable = false)
     private BigDecimal transportAllowance;
+
     private BigDecimal specialAllowance;
 
     // Deductions
+    @Column(nullable = false)
     private BigDecimal providentFund; // PF
-    private BigDecimal professionalTax;
-    private BigDecimal incomeTax;
-
-    private BigDecimal bonus;
-    private BigDecimal deductions; // For other ad-hoc deductions
 
     @Column(nullable = false)
+    private BigDecimal professionalTax;
+
+    private BigDecimal incomeTax;
+
+    // Totals (Auto-calculated typically, but good for caching)
+    private BigDecimal grossSalary;
     private BigDecimal netSalary;
-
-    @Enumerated(EnumType.STRING)
-    private PayrollStatus status;
-
-    private String paymentMethod;
-    private String remarks;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    public enum PayrollStatus {
-        PENDING, PROCESSING, PAID, CANCELLED
-    }
 
     @PrePersist
     protected void onCreate() {
