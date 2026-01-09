@@ -14,7 +14,14 @@ PriyanshJava/ (Root)
 │   │   ├── controller/ (API Endpoints)
 │   │   ├── service/ (Business Logic)
 │   │   ├── repository/ (Database Access)
-│   │   ├── entity/ (Database Models: User, Employee, Leave, etc.)
+│   │   │   ├── UserRepository.java
+│   │   │   ├── EmployeeRepository.java
+│   │   │   ├── AttendanceRepository.java
+│   │   │   ├── LeaveRepository.java
+│   │   │   ├── LeaveTypeRepository.java
+│   │   │   ├── LeaveBalanceRepository.java
+│   │   │   └── RoleRepository.java
+│   │   ├── entity/ (Database Models: User, Employee, Leave, LeaveType, LeaveBalance, LeaveStatus)
 │   │   ├── dto/ (Data Transfer Objects)
 │   │   └── util/ (Helpers)
 │   └── src/main/resources/ (application.properties, SQL)
@@ -44,12 +51,14 @@ The backend follows a layered architecture to keep the code organized and easy t
 
 ### 1. Entity (`com.example.hr.management.entity`)
 - **What it is**: Represents a table in the database.
-- **Example (`User.java`)**:
-  - `id`: Unique identifier.
-  - `username`, `email`, `password`: Login credentials.
-  - `fullName`: The user's displayed name.
-  - `roles`: What the user can do (Admin, Employee, etc.).
-  - `enabled`: If the account is active.
+- **Key Entities**:
+  - **`User.java`**: Login credentials and roles.
+  - **`Employee.java`**: Detailed employee profile.
+  - **`Leave.java`**: Leave request details (dates, reason, status).
+  - **`LeaveType.java`**: Types of leave (Sick, Casual, etc.) and their yearly limits.
+  - **`LeaveBalance.java`**: Tracks how many days an employee has left for each leave type.
+  - **`LeaveStatus.java`**: Enum for Pending, Approved, Rejected, etc.
+  - **`Attendance.java`**: Daily clock-in/out records.
 
 ### 2. Repository (`com.example.hr.management.repository`)
 - **What it is**: The bridge between Java and the Database.
