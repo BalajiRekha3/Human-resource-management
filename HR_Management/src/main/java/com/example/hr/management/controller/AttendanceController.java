@@ -87,18 +87,15 @@ public class AttendanceController {
 
     @GetMapping("/date/{date}")
     @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'MANAGER')")
-    public ResponseEntity<Map<String, Object>> getAttendanceByDate(@PathVariable LocalDate date) {
-        List<AttendanceResponseDTO> attendanceList = attendanceService.getAttendanceByDate(date);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("date", date);
-        response.put("totalRecords", attendanceList.size());
-        response.put("attendanceRecords", attendanceList);
-        response.put("message", attendanceList.isEmpty()
-                ? "No attendance records found for " + date
-                : "Found " + attendanceList.size() + " attendance record(s) for " + date);
-
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> getAttendanceByDate(@PathVariable LocalDate date) {
+        try {
+            List<AttendanceResponseDTO> attendanceList = attendanceService.getAttendanceByDate(date);
+            return ResponseEntity
+                    .ok(new ApiResponse<>(true, "Attendance records retrieved successfully", attendanceList));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "Error retrieving attendance: " + e.getMessage(), null));
+        }
     }
 
     @GetMapping("/employee/{employeeId}/monthly")

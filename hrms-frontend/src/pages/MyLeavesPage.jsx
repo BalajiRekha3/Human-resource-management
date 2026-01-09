@@ -13,8 +13,10 @@ const MyLeavesPage = () => {
     const employeeId = user?.employeeId; // Get from auth context
 
     useEffect(() => {
-        fetchMyLeaves();
-    }, []);
+        if (employeeId) {
+            fetchMyLeaves();
+        }
+    }, [employeeId]);
 
     const fetchMyLeaves = async () => {
         setLoading(true);
@@ -79,6 +81,11 @@ const MyLeavesPage = () => {
                     {loading ? (
                         <div className="text-center py-8">
                             <p className="text-gray-600">Loading leaves...</p>
+                        </div>
+                    ) : !employeeId ? (
+                        <div className="text-center py-8">
+                            <p className="text-orange-600 text-lg font-medium">No employee profile linked to your account.</p>
+                            <p className="text-sm text-gray-500">Please contact HR or re-login if you recently created a profile.</p>
                         </div>
                     ) : filteredLeaves.length === 0 ? (
                         <div className="text-center py-8">

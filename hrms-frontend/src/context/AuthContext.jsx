@@ -63,6 +63,8 @@ export const AuthProvider = ({ children }) => {
 
     const value = {
         user,
+        employeeId: user?.employeeId,
+        isAdmin: user?.roles?.includes('ROLE_ADMIN'),
         token,
         login,
         logout,

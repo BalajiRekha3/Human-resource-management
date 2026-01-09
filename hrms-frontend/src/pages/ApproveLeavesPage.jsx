@@ -13,8 +13,10 @@ const ApproveLeavesPage = () => {
     const [approverId] = useState(user?.employeeId); // Get from auth context
 
     useEffect(() => {
-        fetchPendingLeaves();
-    }, []);
+        if (approverId) {
+            fetchPendingLeaves();
+        }
+    }, [approverId]);
 
     const fetchPendingLeaves = async () => {
         setLoading(true);

@@ -14,6 +14,8 @@ import LeaveApply from './pages/ApplyLeave';
 import ApproveLeavesPage from './pages/ApproveLeavesPage';
 import MyLeavesPage from './pages/MyLeavesPage';
 import LeaveTypesPage from './pages/LeaveTypesPage';
+import ProfilePage from './pages/ProfilePage';
+import MyPaySlips from './pages/MyPaySlips';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 function App() {
@@ -49,6 +51,10 @@ function App() {
             <Route path="leave/apply" element={<LeaveApply />} />
             <Route path="leave/approve" element={<ApproveLeavesPage />} />
             <Route path="leave/types" element={<LeaveTypesPage />} />
+
+            {/* Payroll & Profile */}
+            <Route path="payroll" element={<MyPaySlips />} />
+            <Route path="profile" element={<ProfilePage />} />
           </Route>
 
           {/* Catch all */}

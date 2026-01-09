@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { employeeAPI } from '../services/api';
+import { employeeAPI, userAPI } from '../services/api';
 import { toast } from 'react-toastify';
 import { ArrowLeft, Save, User, Mail, Phone, MapPin, Briefcase, DollarSign } from 'lucide-react';
 
@@ -28,11 +28,23 @@ const EditEmployee = () => {
         employmentType: 'FULL_TIME',
         employmentStatus: 'ACTIVE',
         basicSalary: '',
+        userId: '',
     });
+    const [users, setUsers] = useState([]);
 
     useEffect(() => {
         fetchEmployee();
+        fetchUsers();
     }, [id]);
+
+    const fetchUsers = async () => {
+        try {
+            const response = await userAPI.getAll();
+            setUsers(response.data);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        }
+    };
 
     const fetchEmployee = async () => {
         try {
@@ -296,6 +308,16 @@ const EditEmployee = () => {
                             required
                             placeholder="50000"
                             icon={<DollarSign size={18} />}
+                        />
+                        <FormSelect
+                            label="Linked User Account"
+                            name="userId"
+                            value={formData.userId || ''}
+                            onChange={handleChange}
+                            options={[
+                                { value: '', label: 'None' },
+                                ...users.map(u => ({ value: u.id, label: `${u.username} (${u.email})` }))
+                            ]}
                         />
                     </div>
                 </div>

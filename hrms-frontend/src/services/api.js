@@ -107,5 +107,17 @@ export const leaveBalanceAPI = {
     initialize: (empId, year) => api.post(`/leave-balances/initialize/${empId}/${year}`),
 };
 
+// Payroll APIs
+export const payrollAPI = {
+    generate: (params) => api.post('/payroll/generate', null, { params }),
+    getEmployeePayrolls: (employeeId) => api.get(`/payroll/employee/${employeeId}`),
+    getById: (id) => api.get(`/payroll/${id}`),
+    updateStatus: (id, status) => api.put(`/payroll/${id}/status`, null, { params: { status } }),
+};
+
+
+export const userAPI = {
+    getAll: () => api.get('/users'),
+};
 
 export default api;

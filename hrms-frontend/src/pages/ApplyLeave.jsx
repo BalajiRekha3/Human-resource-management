@@ -33,7 +33,7 @@ const ApplyLeave = () => {
     };
 
     useEffect(() => {
-        if (formData.fromDate && formData.toDate) {
+        if (formData.fromDate && formData.toDate && formData.employeeId) {
             const from = new Date(formData.fromDate);
             const to = new Date(formData.toDate);
             const days = Math.ceil((to - from) / (1000 * 60 * 60 * 24)) + 1;
@@ -43,7 +43,7 @@ const ApplyLeave = () => {
                 fetchLeaveBalance();
             }
         }
-    }, [formData.fromDate, formData.toDate, formData.leaveTypeId]);
+    }, [formData.fromDate, formData.toDate, formData.leaveTypeId, formData.employeeId]);
 
     const fetchLeaveBalance = async () => {
         try {
@@ -97,6 +97,20 @@ const ApplyLeave = () => {
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">Apply for Leave</h1>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Employee Profile Warning */}
+                    {!formData.employeeId && (
+                        <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-6">
+                            <div className="flex">
+                                <div className="ml-3">
+                                    <p className="text-sm text-orange-700">
+                                        Your user account is not linked to an employee profile.
+                                        You won't be able to apply for leave. Please contact HR.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Leave Type */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -203,7 +217,7 @@ const ApplyLeave = () => {
                     <div className="flex gap-4">
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || !formData.employeeId}
                             className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-6 rounded-lg transition duration-200"
                         >
                             {loading ? 'Applying...' : 'Apply Leave'}

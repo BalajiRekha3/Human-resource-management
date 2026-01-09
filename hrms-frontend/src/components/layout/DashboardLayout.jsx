@@ -11,6 +11,8 @@ import {
     Menu,
     X,
     Clock,
+    User,
+    CreditCard,
 } from 'lucide-react';
 
 const DashboardLayout = () => {
@@ -39,7 +41,9 @@ const DashboardLayout = () => {
                 { name: 'Leave Types', path: '/dashboard/leave/types', role: 'ROLE_ADMIN' }
             ]
         },
-        { name: 'Reports', path: '/dashboard/reports', icon: FileText },
+        { name: 'Reports', path: '/dashboard/reports', icon: FileText, role: 'ROLE_ADMIN' },
+        { name: 'My Payslips', path: '/dashboard/payroll', icon: CreditCard },
+        { name: 'My Profile', path: '/dashboard/profile', icon: User },
         { name: 'Settings', path: '/dashboard/settings', icon: Settings },
     ];
 
