@@ -33,7 +33,7 @@ import {
 
 const AttendanceList = () => {
     const [attendanceRecords, setAttendanceRecords] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [employees, setEmployees] = useState([]);
     const [selectedEmployee, setSelectedEmployee] = useState('');
     const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -52,24 +52,28 @@ const AttendanceList = () => {
         if (fetchedRef.current) return;
         fetchedRef.current = true;
 
-        console.log('Initializing Attendance page');
+        console.log('📍 Initializing Attendance page');
         fetchEmployees();
         fetchTodayAttendance();
     }, []);
 
     useEffect(() => {
         if (selectedEmployee) {
+            console.log('📍 Fetching monthly attendance for employee:', selectedEmployee);
             fetchMonthlyAttendance();
         }
     }, [selectedEmployee, selectedMonth]);
 
     const fetchEmployees = async () => {
         try {
+            console.log('🔄 Fetching employees...');
             const response = await employeeAPI.getAll();
-            setEmployees(response.data);
+            setEmployees(response.data || []);
+            console.log('✅ Employees loaded:', response.data?.length);
         } catch (error) {
-            console.error('Error fetching employees:', error);
+            console.error('❌ Error fetching employees:', error);
             toast.error('Failed to fetch employees');
+            setEmployees([]);
         }
     };
 
@@ -77,19 +81,26 @@ const AttendanceList = () => {
         try {
             setLoading(true);
             const today = new Date().toISOString().split('T')[0];
-            console.log('Fetching attendance for date:', today);
+            console.log('🔄 Fetching attendance for date:', today);
 
             const response = await attendanceAPI.getByDate(today);
-            console.log('Attendance response:', response.data);
+            console.log('📦 API Response:', response.data);
 
-            if (response.data && Array.isArray(response.data)) {
-                setAttendanceRecords(response.data);
+            if (response && response.data) {
+                const data = Array.isArray(response.data) ? response.data : [];
+                setAttendanceRecords(data);
+                console.log('✅ Attendance records loaded:', data.length);
             } else {
+                console.warn('⚠️ No data in response');
                 setAttendanceRecords([]);
             }
         } catch (error) {
-            console.error('Error fetching attendance:', error);
-            toast.error('Failed to fetch attendance records');
+            console.error('❌ Error fetching attendance:', error);
+            if (error.response?.status === 401) {
+                toast.error('Session expired. Please login again.');
+            } else {
+                toast.error('Failed to fetch attendance records');
+            }
             setAttendanceRecords([]);
         } finally {
             setLoading(false);
@@ -103,12 +114,18 @@ const AttendanceList = () => {
             const startDate = `${year}-${month}-01`;
             const endDate = new Date(year, parseInt(month), 0).toISOString().split('T')[0];
 
+            console.log('🔄 Fetching monthly attendance:', { startDate, endDate });
+
             const response = await attendanceAPI.getMonthlyAttendance(
                 selectedEmployee,
                 startDate,
                 endDate
             );
-            setAttendanceRecords(response.data || []);
+
+            if (response && response.data) {
+                setAttendanceRecords(Array.isArray(response.data) ? response.data : []);
+                console.log('✅ Monthly records loaded:', response.data?.length);
+            }
 
             // Fetch summary
             const summaryResponse = await attendanceAPI.getAttendanceSummary(
@@ -116,10 +133,15 @@ const AttendanceList = () => {
                 startDate,
                 endDate
             );
-            setAttendanceSummary(summaryResponse.data);
+
+            if (summaryResponse && summaryResponse.data) {
+                setAttendanceSummary(summaryResponse.data);
+                console.log('✅ Summary loaded:', summaryResponse.data);
+            }
         } catch (error) {
-            console.error('Error fetching monthly attendance:', error);
+            console.error('❌ Error fetching monthly attendance:', error);
             toast.error('Failed to fetch attendance records');
+            setAttendanceRecords([]);
         } finally {
             setLoading(false);
         }
@@ -133,12 +155,12 @@ const AttendanceList = () => {
             }
 
             setClockingin(true);
-            console.log('Clocking in for employee:', employeeId);
+            console.log('🕐 Clocking in for employee:', employeeId);
 
             const response = await attendanceAPI.clockIn(employeeId);
-            console.log('Clock in response:', response.data);
+            console.log('✅ Clock in response:', response.data);
 
-            if (response.data) {
+            if (response && response.data) {
                 const clockInTime = response.data.clockInTime;
                 toast.success(`✅ Clock In successful at ${clockInTime}`);
 
@@ -148,17 +170,20 @@ const AttendanceList = () => {
                     toast.info('✓ You are on time!');
                 }
 
+                // Close modal immediately
                 setShowClockModal(false);
                 setSelectedEmployeeForClock(null);
 
-                // Wait a moment then refresh
-                console.log('Refreshing attendance data...');
-                setTimeout(async () => {
-                    await fetchTodayAttendance();
-                }, 1000);
+                // Refresh attendance data after delay
+                console.log('⏳ Scheduling attendance refresh...');
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                console.log('🔄 Refreshing attendance data...');
+                await fetchTodayAttendance();
+                console.log('✅ Attendance data refreshed');
             }
         } catch (error) {
-            console.error('Error clocking in:', error);
+            console.error('❌ Clock in error:', error);
             const errorMsg =
                 error.response?.data?.message ||
                 error.message ||
@@ -177,12 +202,12 @@ const AttendanceList = () => {
             }
 
             setClockingin(true);
-            console.log('Clocking out for employee:', employeeId);
+            console.log('🕐 Clocking out for employee:', employeeId);
 
             const response = await attendanceAPI.clockOut(employeeId);
-            console.log('Clock out response:', response.data);
+            console.log('✅ Clock out response:', response.data);
 
-            if (response.data) {
+            if (response && response.data) {
                 const clockOutTime = response.data.clockOutTime;
                 toast.success(`✅ Clock Out successful at ${clockOutTime}`);
 
@@ -190,17 +215,20 @@ const AttendanceList = () => {
                     toast.info(`📊 Total working hours: ${response.data.workingHours} hrs`);
                 }
 
+                // Close modal immediately
                 setShowClockModal(false);
                 setSelectedEmployeeForClock(null);
 
-                // Wait a moment then refresh
-                console.log('Refreshing attendance data...');
-                setTimeout(async () => {
-                    await fetchTodayAttendance();
-                }, 1000);
+                // Refresh attendance data after delay
+                console.log('⏳ Scheduling attendance refresh...');
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                console.log('🔄 Refreshing attendance data...');
+                await fetchTodayAttendance();
+                console.log('✅ Attendance data refreshed');
             }
         } catch (error) {
-            console.error('Error clocking out:', error);
+            console.error('❌ Clock out error:', error);
             const errorMsg =
                 error.response?.data?.message ||
                 error.message ||
@@ -213,14 +241,15 @@ const AttendanceList = () => {
 
     const handleDelete = async () => {
         try {
+            console.log('🗑️ Deleting attendance record:', recordToDelete.id);
             await attendanceAPI.deleteAttendance(recordToDelete.id);
             toast.success('✅ Attendance record deleted successfully!');
             setShowDeleteModal(false);
             setRecordToDelete(null);
-            fetchTodayAttendance();
+            await fetchTodayAttendance();
         } catch (error) {
-            console.error('Error deleting record:', error);
-            toast.error('❌ Failed to delete attendance record');
+            console.error('❌ Error deleting record:', error);
+            toast.error('Failed to delete attendance record');
         }
     };
 
@@ -248,9 +277,11 @@ const AttendanceList = () => {
             a.href = url;
             a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
+            window.URL.revokeObjectURL(url);
             toast.success('✅ Attendance data exported successfully!');
         } catch (error) {
-            toast.error('❌ Failed to export data');
+            console.error('❌ Export error:', error);
+            toast.error('Failed to export data');
         }
     };
 
@@ -409,14 +440,6 @@ const AttendanceList = () => {
         },
     });
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-96">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -452,7 +475,7 @@ const AttendanceList = () => {
                         onChange={(e) => setSelectedEmployee(e.target.value)}
                         className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
-                        <option value="">Select Employee</option>
+                        <option value="">Today's Attendance</option>
                         {employees.map((emp) => (
                             <option key={emp.id} value={emp.id}>
                                 {emp.fullName} ({emp.employeeCode})
@@ -461,12 +484,14 @@ const AttendanceList = () => {
                     </select>
 
                     {/* Month Filter */}
-                    <input
-                        type="month"
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
+                    {selectedEmployee && (
+                        <input
+                            type="month"
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(e.target.value)}
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                    )}
 
                     {/* Search */}
                     <input
@@ -563,7 +588,15 @@ const AttendanceList = () => {
                             ))}
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                            {table.getRowModel().rows.length > 0 ? (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={columns.length} className="px-6 py-8 text-center">
+                                        <div className="flex justify-center">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : table.getRowModel().rows.length > 0 ? (
                                 table.getRowModel().rows.map((row) => (
                                     <tr key={row.id} className="hover:bg-gray-50 transition">
                                         {row.getVisibleCells().map((cell) => (
@@ -576,7 +609,8 @@ const AttendanceList = () => {
                             ) : (
                                 <tr>
                                     <td colSpan={columns.length} className="px-6 py-8 text-center">
-                                        <p className="text-gray-500">No attendance records found</p>
+                                        <p className="text-gray-500 font-medium">No attendance records found</p>
+                                        <p className="text-gray-400 text-sm mt-1">Clock in/out to record attendance</p>
                                     </td>
                                 </tr>
                             )}
@@ -685,9 +719,7 @@ const AttendanceList = () => {
 
                             {selectedEmployeeForClock && (
                                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                    <p className="text-sm text-blue-700 font-medium">
-                                        Current Time:
-                                    </p>
+                                    <p className="text-sm text-blue-700 font-medium">Current Time:</p>
                                     <p className="text-2xl font-bold text-blue-600 mt-1">
                                         {new Date().toLocaleTimeString('en-IN')}
                                     </p>
@@ -721,7 +753,7 @@ const AttendanceList = () => {
                                             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:bg-red-300 disabled:cursor-not-allowed"
                                         >
                                             <LogOut size={20} />
-                                            {clockingIn ? 'Processing..' : 'Clock Out'}
+                                            {clockingIn ? 'Processing...' : 'Clock Out'}
                                         </button>
                                     </>
                                 )}
@@ -734,7 +766,7 @@ const AttendanceList = () => {
             {/* View Details Modal */}
             {viewDetails && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl max-w-2xl w-full p-6">
+                    <div className="bg-white rounded-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-bold text-gray-900">Attendance Details</h2>
                             <button
@@ -745,31 +777,40 @@ const AttendanceList = () => {
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                            <DetailItem label="Date" value={viewDetails.attendanceDate} />
-                            <DetailItem label="Employee" value={viewDetails.employeeName} />
-                            <DetailItem label="Employee Code" value={viewDetails.employeeCode} />
-                            <DetailItem label="Status" value={viewDetails.status} />
-                            <DetailItem label="Clock In" value={viewDetails.clockInTime || 'N/A'} />
-                            <DetailItem label="Clock Out" value={viewDetails.clockOutTime || 'N/A'} />
-                            <DetailItem label="Working Hours" value={viewDetails.workingHours ? `${viewDetails.workingHours} hrs` : 'N/A'} />
-                            <DetailItem label="Late" value={viewDetails.isLate ? `${viewDetails.lateMinutes} mins` : 'On Time'} />
-                            <DetailItem label="Remarks" value={viewDetails.remarks || 'N/A'} className="col-span-2" />
-                        </div>
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <DetailItem label="Date" value={viewDetails.attendanceDate} />
+                                <DetailItem label="Employee" value={viewDetails.employeeName} />
+                                <DetailItem label="Employee Code" value={viewDetails.employeeCode} />
+                                <DetailItem label="Status" value={viewDetails.status} />
+                                <DetailItem label="Clock In" value={viewDetails.clockInTime || 'N/A'} />
+                                <DetailItem label="Clock Out" value={viewDetails.clockOutTime || 'N/A'} />
+                                <DetailItem label="Working Hours" value={viewDetails.workingHours ? `${viewDetails.workingHours} hrs` : 'N/A'} />
+                                <DetailItem label="Late" value={viewDetails.isLate ? `${viewDetails.lateMinutes} mins` : 'On Time'} />
+                            </div>
 
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => setViewDetails(null)}
-                                className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-medium"
-                            >
-                                Close
-                            </button>
+                            {viewDetails.remarks && (
+                                <div>
+                                    <p className="text-sm text-gray-500 mb-2 font-medium">Remarks</p>
+                                    <p className="text-base text-gray-900 bg-gray-50 p-3 rounded-lg">{viewDetails.remarks}</p>
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-3 pt-6 border-t">
+                                <button
+                                    onClick={() => setViewDetails(null)}
+                                    className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-medium"
+                                >
+                                    Close
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {showDeleteModal && (
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && recordToDelete && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl max-w-md w-full p-6">
                         <div className="text-center">
@@ -807,9 +848,12 @@ const AttendanceList = () => {
     );
 };
 
-// Helper Components
+// ============================================
+// HELPER COMPONENTS
+// ============================================
+
 const SummaryCard = ({ title, value, icon, bgColor }) => (
-    <div className={`${bgColor} rounded-lg p-4 text-center border border-gray-200`}>
+    <div className={`${bgColor} rounded-lg p-4 text-center border border-gray-200 hover:shadow-md transition-shadow`}>
         <div className="flex justify-center mb-2">{icon}</div>
         <p className="text-sm text-gray-600 mb-1 font-medium">{title}</p>
         <p className="text-2xl font-bold text-gray-900">{value}</p>
