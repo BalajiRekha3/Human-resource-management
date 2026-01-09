@@ -9,9 +9,14 @@ PriyanshJava/ (Root)
 ├── HR_Management/ (Backend - Spring Boot)
 │   ├── pom.xml (Maven dependencies)
 │   ├── src/main/java/com/example/hr/management/
-│   │   ├── HrManagementApplication.java (Main Entry)
-│   │   ├── config/ (Security, JWT, Swagger)
 │   │   ├── controller/ (API Endpoints)
+│   │   │   ├── AuthController.java
+│   │   │   ├── EmployeeController.java
+│   │   │   ├── AttendanceController.java
+│   │   │   ├── LeaveController.java
+│   │   │   ├── LeaveTypeController.java
+│   │   │   ├── LeaveBalanceController.java
+│   │   │   └── ApiResponse.java (Common Response Wrapper)
 │   │   ├── service/ (Business Logic)
 │   │   ├── repository/ (Database Access)
 │   │   │   ├── UserRepository.java
@@ -23,6 +28,10 @@ PriyanshJava/ (Root)
 │   │   │   └── RoleRepository.java
 │   │   ├── entity/ (Database Models: User, Employee, Leave, LeaveType, LeaveBalance, LeaveStatus)
 │   │   ├── dto/ (Data Transfer Objects)
+│   │   │   ├── LeaveRequestDTO.java
+│   │   │   ├── LeaveResponseDTO.java
+│   │   │   ├── LeaveBalanceDTO.java
+│   │   │   └── LeaveTypeDTO.java
 │   │   └── util/ (Helpers)
 │   └── src/main/resources/ (application.properties, SQL)
 │

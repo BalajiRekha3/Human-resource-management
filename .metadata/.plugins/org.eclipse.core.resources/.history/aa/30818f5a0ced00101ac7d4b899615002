@@ -1,0 +1,265 @@
+// src/main/java/com/example/hr/management/service/LeaveService.java
+package com.example.hr.management.service;
+
+import com.example.hr.management.dto.LeaveDTO;
+import com.example.hr.management.dto.LeaveBalanceDTO;
+import com.example.hr.management.entity.Leave;
+import com.example.hr.management.entity.LeaveBalance;
+import com.example.hr.management.entity.LeaveType;
+import com.example.hr.management.entity.Employee;
+import com.example.hr.management.entity.LeaveStatus;
+import com.example.hr.management.repository.LeaveRepository;
+import com.example.hr.management.repository.LeaveTypeRepository;
+import com.example.hr.management.repository.LeaveBalanceRepository;
+import com.example.hr.management.repository.EmployeeRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class LeaveService {
+
+    private final LeaveRepository leaveRepository;
+    private final LeaveTypeRepository leaveTypeRepository;
+    private final LeaveBalanceRepository leaveBalanceRepository;
+    private final EmployeeRepository employeeRepository;
+
+    // Apply for leave
+    public LeaveDTO applyLeave(LeaveDTO leaveDTO) {
+        Employee employee = employeeRepository.findById(leaveDTO.getEmployeeId())
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        LeaveType leaveType = leaveTypeRepository.findById(leaveDTO.getLeaveTypeId())
+                .orElseThrow(() -> new RuntimeException("Leave type not found"));
+
+        // Validate dates
+        if (leaveDTO.getFromDate().isAfter(leaveDTO.getToDate())) {
+            throw new RuntimeException("From date cannot be after to date");
+        }
+
+        // Calculate number of days
+        int numberOfDays = (int) ChronoUnit.DAYS.between(
+                leaveDTO.getFromDate(),
+                leaveDTO.getToDate()) + 1;
+
+        // Check for overlapping approved leaves
+        List<Leave> overlappingLeaves = leaveRepository.findOverlappingLeaves(
+                employee.getId(), leaveDTO.getFromDate(), leaveDTO.getToDate());
+
+        if (!overlappingLeaves.isEmpty()) {
+            throw new RuntimeException("Leave already approved for these dates");
+        }
+
+        // Check leave balance
+        int year = leaveDTO.getFromDate().getYear();
+        LeaveBalance balance = leaveBalanceRepository
+                .findByEmployeeIdAndLeaveTypeIdAndYear(employee.getId(), leaveType.getId(), year)
+                .orElseThrow(() -> new RuntimeException("Leave balance not found for this year"));
+
+        if (balance.getRemainingDays() < numberOfDays) {
+            throw new RuntimeException("Insufficient leave balance. Available: " +
+                    balance.getRemainingDays() + " days");
+        }
+
+        // Create leave
+        Leave leave = new Leave();
+        leave.setEmployee(employee);
+        leave.setLeaveType(leaveType);
+        leave.setFromDate(leaveDTO.getFromDate());
+        leave.setToDate(leaveDTO.getToDate());
+        leave.setNumberOfDays(numberOfDays);
+        leave.setReason(leaveDTO.getReason());
+        leave.setStatus(LeaveStatus.PENDING);
+
+        Leave savedLeave = leaveRepository.save(leave);
+
+        // Update balance - add to pending days
+        balance.setPendingDays(balance.getPendingDays() + numberOfDays);
+        leaveBalanceRepository.save(balance);
+
+        return mapToDTO(savedLeave);
+    }
+
+    // Approve leave
+    public LeaveDTO approveLeave(Long leaveId, Long approverEmployeeId) {
+        Leave leave = leaveRepository.findById(leaveId)
+                .orElseThrow(() -> new RuntimeException("Leave not found"));
+
+        if (!leave.getStatus().equals(LeaveStatus.PENDING)) {
+            throw new RuntimeException("Only pending leaves can be approved");
+        }
+
+        leave.setStatus(LeaveStatus.APPROVED);
+        leave.setApprovedBy(approverEmployeeId);
+        leave.setApprovalDate(LocalDate.now());
+
+        Leave updatedLeave = leaveRepository.save(leave);
+
+        // Update balance - move from pending to used
+        LeaveBalance balance = leaveBalanceRepository
+                .findByEmployeeIdAndLeaveTypeIdAndYear(
+                        leave.getEmployee().getId(),
+                        leave.getLeaveType().getId(),
+                        leave.getFromDate().getYear())
+                .orElseThrow(() -> new RuntimeException("Leave balance not found"));
+
+        balance.setPendingDays(Math.max(0, balance.getPendingDays() - leave.getNumberOfDays()));
+        balance.setUsedDays(balance.getUsedDays() + leave.getNumberOfDays());
+        balance.setRemainingDays(balance.getTotalDays() - balance.getUsedDays() - balance.getPendingDays());
+        leaveBalanceRepository.save(balance);
+
+        return mapToDTO(updatedLeave);
+    }
+
+    // Reject leave
+    public LeaveDTO rejectLeave(Long leaveId, String rejectionReason) {
+        Leave leave = leaveRepository.findById(leaveId)
+                .orElseThrow(() -> new RuntimeException("Leave not found"));
+
+        if (!leave.getStatus().equals(LeaveStatus.PENDING)) {
+            throw new RuntimeException("Only pending leaves can be rejected");
+        }
+
+        leave.setStatus(LeaveStatus.REJECTED);
+        leave.setRejectionReason(rejectionReason);
+        leave.setApprovalDate(LocalDate.now());
+
+        Leave updatedLeave = leaveRepository.save(leave);
+
+        // Update balance - remove pending days
+        LeaveBalance balance = leaveBalanceRepository
+                .findByEmployeeIdAndLeaveTypeIdAndYear(
+                        leave.getEmployee().getId(),
+                        leave.getLeaveType().getId(),
+                        leave.getFromDate().getYear())
+                .orElseThrow(() -> new RuntimeException("Leave balance not found"));
+
+        balance.setPendingDays(Math.max(0, balance.getPendingDays() - leave.getNumberOfDays()));
+        balance.setRemainingDays(balance.getTotalDays() - balance.getUsedDays() - balance.getPendingDays());
+        leaveBalanceRepository.save(balance);
+
+        return mapToDTO(updatedLeave);
+    }
+
+    // Get employee's leaves
+    public List<LeaveDTO> getEmployeeLeaves(Long employeeId) {
+        return leaveRepository.findByEmployeeId(employeeId)
+                .stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Get employee's leaves by year
+    public List<LeaveDTO> getEmployeeLeavesbyYear(Long employeeId, Integer year) {
+        return leaveRepository.findLeavesByEmployeeAndYear(employeeId, year)
+                .stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Get pending leaves (for approval)
+    public List<LeaveDTO> getPendingLeaves() {
+        return leaveRepository.findByStatus(LeaveStatus.PENDING)
+                .stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Get leave balance
+    public LeaveBalanceDTO getLeaveBalance(Long employeeId, Long leaveTypeId, Integer year) {
+        LeaveBalance balance = leaveBalanceRepository
+                .findByEmployeeIdAndLeaveTypeIdAndYear(employeeId, leaveTypeId, year)
+                .orElseThrow(() -> new RuntimeException("Leave balance not found"));
+
+        return mapBalanceToDTO(balance);
+    }
+
+    // Get all leave balances for employee
+    public List<LeaveBalanceDTO> getEmployeeLeaveBalances(Long employeeId, Integer year) {
+        return leaveBalanceRepository.findByEmployeeIdAndYear(employeeId, year)
+                .stream()
+                .map(this::mapBalanceToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Initialize leave balance for new employee
+    public void initializeLeaveBalance(Long employeeId, Integer year) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        List<LeaveType> leaveTypes = leaveTypeRepository.findByIsActive(true);
+
+        for (LeaveType leaveType : leaveTypes) {
+            LeaveBalance existingBalance = leaveBalanceRepository
+                    .findByEmployeeIdAndLeaveTypeIdAndYear(employeeId, leaveType.getId(), year)
+                    .orElse(null);
+
+            if (existingBalance == null) {
+                LeaveBalance balance = new LeaveBalance();
+                balance.setEmployee(employee);
+                balance.setLeaveType(leaveType);
+                balance.setYear(year);
+                balance.setTotalDays(leaveType.getTotalDays());
+                balance.setUsedDays(0);
+                balance.setRemainingDays(leaveType.getTotalDays());
+                balance.setPendingDays(0);
+
+                leaveBalanceRepository.save(balance);
+            }
+        }
+    }
+
+    // Map Leave to DTO
+    private LeaveDTO mapToDTO(Leave leave) {
+        LeaveDTO dto = new LeaveDTO();
+        dto.setId(leave.getId());
+        dto.setEmployeeId(leave.getEmployee().getId());
+        dto.setEmployeeName(leave.getEmployee().getFirstName() + " " + leave.getEmployee().getLastName());
+        dto.setEmployeeEmail(leave.getEmployee().getEmail());
+        dto.setLeaveTypeId(leave.getLeaveType().getId());
+        dto.setLeaveTypeName(leave.getLeaveType().getName());
+        dto.setFromDate(leave.getFromDate());
+        dto.setToDate(leave.getToDate());
+        dto.setNumberOfDays(leave.getNumberOfDays());
+        dto.setReason(leave.getReason());
+        dto.setStatus(leave.getStatus());
+        dto.setApprovedBy(leave.getApprovedBy());
+        dto.setApprovalDate(leave.getApprovalDate());
+        dto.setRejectionReason(leave.getRejectionReason());
+        dto.setCreatedAt(leave.getCreatedAt());
+        dto.setUpdatedAt(leave.getUpdatedAt());
+
+        if (leave.getApprovedBy() != null) {
+            Employee approver = employeeRepository.findById(leave.getApprovedBy()).orElse(null);
+            if (approver != null) {
+                dto.setApproverName(approver.getFirstName() + " " + approver.getLastName());
+            }
+        }
+
+        return dto;
+    }
+
+    // Map LeaveBalance to DTO
+    private LeaveBalanceDTO mapBalanceToDTO(LeaveBalance balance) {
+        LeaveBalanceDTO dto = new LeaveBalanceDTO();
+        dto.setId(balance.getId());
+        dto.setEmployeeId(balance.getEmployee().getId());
+        dto.setEmployeeName(balance.getEmployee().getFirstName() + " " + balance.getEmployee().getLastName());
+        dto.setLeaveTypeId(balance.getLeaveType().getId());
+        dto.setLeaveTypeName(balance.getLeaveType().getName());
+        dto.setYear(balance.getYear());
+        dto.setTotalDays(balance.getTotalDays());
+        dto.setUsedDays(balance.getUsedDays());
+        dto.setRemainingDays(balance.getRemainingDays());
+        dto.setPendingDays(balance.getPendingDays());
+
+        return dto;
+    }
+}
