@@ -2,9 +2,34 @@
 
 This guide explains how the HRMS (HR Management System) project is structured and how its components interact.
 
-## Core Folders
+## Root Folders
 - **`HR_Management/`**: Backend (Java Spring Boot)
 - **`hrms-frontend/`**: Frontend (React + Vite)
+
+---
+
+## Backend File Structure
+
+```text
+HR_Management/
+├── pom.xml (Maven dependencies)
+├── src/
+│   ├── main/
+│   │   ├── java/com/example/hr/management/
+│   │   │   ├── HrManagementApplication.java (Main Entry)
+│   │   │   ├── config/ (Security, JWT, Swagger)
+│   │   │   ├── controller/ (API Endpoints)
+│   │   │   ├── service/ (Business Logic Interfaces)
+│   │   │   ├── service/impl/ (Business Logic Implementation)
+│   │   │   ├── repository/ (Database Access)
+│   │   │   ├── entity/ (Database Models: User, Employee, Attendance, etc.)
+│   │   │   ├── dto/ (Data Transfer Objects for APIs)
+│   │   │   ├── exception/ (Error Handling)
+│   │   │   └── util/ (Helper classes like JwtUtil)
+│   │   └── resources/
+│   │       ├── application.properties (Configuration)
+│   │       └── data.sql (Initial data)
+```
 
 ---
 
