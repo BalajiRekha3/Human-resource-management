@@ -1,3 +1,4 @@
+// src/main/java/com/example/hr/management/repository/LeaveTypeRepository.java
 package com.example.hr.management.repository;
 
 import com.example.hr.management.entity.LeaveType;

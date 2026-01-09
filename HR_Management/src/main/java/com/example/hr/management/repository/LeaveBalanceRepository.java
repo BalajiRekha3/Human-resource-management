@@ -1,3 +1,4 @@
+// src/main/java/com/example/hr/management/repository/LeaveBalanceRepository.java
 package com.example.hr.management.repository;
 
 import com.example.hr.management.entity.LeaveBalance;
@@ -10,9 +11,11 @@ import java.util.Optional;
 @Repository
 public interface LeaveBalanceRepository extends JpaRepository<LeaveBalance, Long> {
 
-    List<LeaveBalance> findByEmployeeId(Long employeeId);
+    Optional<LeaveBalance> findByEmployeeIdAndLeaveTypeIdAndYear(Long employeeId,
+            Long leaveTypeId,
+            Integer year);
 
     List<LeaveBalance> findByEmployeeIdAndYear(Long employeeId, Integer year);
 
-    Optional<LeaveBalance> findByEmployeeIdAndLeaveTypeIdAndYear(Long employeeId, Long leaveTypeId, Integer year);
+    List<LeaveBalance> findByEmployeeId(Long employeeId);
 }
