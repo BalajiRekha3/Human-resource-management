@@ -1,0 +1,5 @@
+package com.example.hr.management.util;
+
+@Component
+public class SalaryCalculator {
+}
