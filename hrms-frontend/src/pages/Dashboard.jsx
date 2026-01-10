@@ -101,14 +101,14 @@ const Dashboard = () => {
     };
 
     const StatCard = ({ icon: Icon, title, value, color }) => (
-        <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-gray-600 text-sm font-medium">{title}</p>
-                    <p className="text-3xl font-bold text-gray-800 mt-2">{value}</p>
+                    <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">{title}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
                 </div>
-                <div className={`${color} p-4 rounded-full`}>
-                    <Icon size={32} className="text-white" />
+                <div className={`${color} p-3.5 rounded-xl shadow-sm`}>
+                    <Icon size={24} className="text-white" />
                 </div>
             </div>
         </div>
@@ -166,35 +166,35 @@ const Dashboard = () => {
 
                     {/* Leave Status Summary Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-400">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 border-l-4 border-l-amber-400">
                             <div className="flex justify-between items-center">
                                 <div>
-                                    <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Pending Leaves</p>
+                                    <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Pending Leaves</p>
                                     <p className="text-2xl font-bold text-gray-900 mt-1">{stats.leaveStats?.pending || 0}</p>
                                 </div>
-                                <div className="bg-yellow-100 p-3 rounded-lg text-yellow-600">
+                                <div className="bg-amber-50 p-3 rounded-xl text-amber-600">
                                     <Clock size={20} />
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 border-l-4 border-l-emerald-500">
                             <div className="flex justify-between items-center">
                                 <div>
-                                    <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Approved Leaves</p>
+                                    <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Approved Leaves</p>
                                     <p className="text-2xl font-bold text-gray-900 mt-1">{stats.leaveStats?.approved || 0}</p>
                                 </div>
-                                <div className="bg-green-100 p-3 rounded-lg text-green-600">
+                                <div className="bg-emerald-50 p-3 rounded-xl text-emerald-600">
                                     <UserCheck size={20} />
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 border-l-4 border-l-rose-500">
                             <div className="flex justify-between items-center">
                                 <div>
-                                    <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Rejected Leaves</p>
+                                    <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Rejected Leaves</p>
                                     <p className="text-2xl font-bold text-gray-900 mt-1">{stats.leaveStats?.rejected || 0}</p>
                                 </div>
-                                <div className="bg-red-100 p-3 rounded-lg text-red-600">
+                                <div className="bg-rose-50 p-3 rounded-xl text-rose-600">
                                     <X size={20} />
                                 </div>
                             </div>
