@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import EmployeeList from './pages/EmployeeList';
 import AddEmployee from './pages/AddEmployee';
 import EditEmployee from './pages/EditEmployee';
+import CreateUserPage from './pages/CreateUserPage';
 import AttendanceList from './pages/AttendanceList';
 import LeaveApply from './pages/ApplyLeave';
 import ApproveLeavesPage from './pages/ApproveLeavesPage';
@@ -57,6 +58,9 @@ function App() {
             />
             <Route path="employees/add" element={<AddEmployee />} />
             <Route path="employees/edit/:id" element={<EditEmployee />} />
+
+            {/* User Management */}
+            <Route path="users/create" element={<CreateUserPage />} />
 
             {/* Attendance Routes */}
             <Route path="attendance" element={<AttendanceList />} />

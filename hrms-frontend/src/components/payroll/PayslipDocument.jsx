@@ -66,7 +66,7 @@ const PayslipDocument = forwardRef(({ payroll, employee }, ref) => {
                 </div>
                 <div className="grid grid-cols-3">
                     <span className="font-bold text-gray-600">UAN NO</span>
-                    <span className="col-span-2">: N/A</span>
+                    <span className="col-span-2">: {employee.uanNo || 'N/A'}</span>
                 </div>
 
                 <div className="grid grid-cols-3">
@@ -75,7 +75,7 @@ const PayslipDocument = forwardRef(({ payroll, employee }, ref) => {
                 </div>
                 <div className="grid grid-cols-3">
                     <span className="font-bold text-gray-600">PF NO</span>
-                    <span className="col-span-2">: N/A</span>
+                    <span className="col-span-2">: {employee.pfNo || 'N/A'}</span>
                 </div>
 
                 <div className="grid grid-cols-3">
@@ -84,7 +84,7 @@ const PayslipDocument = forwardRef(({ payroll, employee }, ref) => {
                 </div>
                 <div className="grid grid-cols-3">
                     <span className="font-bold text-gray-600">ESI NO</span>
-                    <span className="col-span-2">: N/A</span>
+                    <span className="col-span-2">: {employee.esiNo || 'N/A'}</span>
                 </div>
 
                 <div className="grid grid-cols-3">
@@ -93,7 +93,7 @@ const PayslipDocument = forwardRef(({ payroll, employee }, ref) => {
                 </div>
                 <div className="grid grid-cols-3">
                     <span className="font-bold text-gray-600">BANK NAME</span>
-                    <span className="col-span-2">: HDFC BANK</span>
+                    <span className="col-span-2">: {employee.bankName || 'N/A'}</span>
                 </div>
 
                 <div className="grid grid-cols-3">
@@ -102,7 +102,7 @@ const PayslipDocument = forwardRef(({ payroll, employee }, ref) => {
                 </div>
                 <div className="grid grid-cols-3">
                     <span className="font-bold text-gray-600">ACCOUNT NO</span>
-                    <span className="col-span-2">: XXXXXX1234</span>
+                    <span className="col-span-2">: {employee.bankAccountNo || 'N/A'}</span>
                 </div>
 
                 <div className="grid grid-cols-3">
@@ -111,7 +111,7 @@ const PayslipDocument = forwardRef(({ payroll, employee }, ref) => {
                 </div>
                 <div className="grid grid-cols-3">
                     <span className="font-bold text-gray-600">PAN NO</span>
-                    <span className="col-span-2">: XXXXX0000X</span>
+                    <span className="col-span-2">: {employee.panNo || 'N/A'}</span>
                 </div>
             </div>
 

@@ -150,18 +150,61 @@ const ProfilePage = () => {
         );
     }
 
+    // Helper for rendering unlinked user profile
     if (!employeeId && !employee) {
         return (
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded shadow-sm">
-                <div className="flex items-center">
-                    <Shield className="text-yellow-400 mr-3" size={24} />
-                    <p className="text-yellow-700 font-medium">
-                        No employee profile linked to your user account.
-                    </p>
+            <div className="max-w-4xl mx-auto space-y-6">
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div className="h-32 bg-gradient-to-r from-gray-700 to-gray-900"></div>
+                    <div className="px-8 pb-8 pt-0 -mt-12">
+                        <div className="flex flex-col md:flex-row items-end gap-6">
+                            <div className="w-24 h-24 rounded-full bg-white p-1 shadow-lg">
+                                <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-3xl font-bold">
+                                    {user?.username?.charAt(0).toUpperCase()}
+                                </div>
+                            </div>
+                            <div className="flex-1 pb-2">
+                                <h1 className="text-3xl font-bold text-gray-900 leading-tight">
+                                    {user?.username}
+                                </h1>
+                                <p className="text-gray-600 font-medium flex items-center gap-2">
+                                    <Shield size={16} /> {user?.roles?.[0]?.replace('ROLE_', '')}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <p className="text-yellow-600 mt-2 ml-9">
-                    Please <strong>log out and log back in</strong> to automatically link your profile, or contact your HR administrator.
-                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-2xl shadow-sm p-6">
+                        <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                            <User size={20} className="text-blue-600" />
+                            Account Details
+                        </h2>
+                        <div className="space-y-4">
+                            <InfoItem icon={User} label="Username" value={user?.username} />
+                            <InfoItem icon={Shield} label="Role" value={user?.roles?.join(', ')} />
+                            <InfoItem icon={Mail} label="Email" value={user?.email || 'Not provided'} />
+                        </div>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6">
+                        <h2 className="text-lg font-bold text-blue-900 mb-2">Complete Your Profile</h2>
+                        <p className="text-blue-700 mb-6">
+                            You currently don't have an employee profile linked to this account.
+                            Create one to access features like Leave, Attendance, and Payroll.
+                        </p>
+                        {/* Only Admin/HR can create profiles, usually. But for self, maybe contact admin? 
+                            Since this is likely the Admin viewing their own profile, give them a hint. */}
+                        <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-blue-100">
+                            <Shield className="text-blue-600" size={24} />
+                            <div>
+                                <p className="font-semibold text-gray-900">Admin Action Required</p>
+                                <p className="text-sm text-gray-600">Go to Employees &gt; Add Employee, and select this user account to link.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -347,10 +390,29 @@ const ProfilePage = () => {
                             <DetailBlock label="Join Date" value={employee?.joiningDate} />
                             <DetailBlock label="Employment Type" value={employee?.employmentType?.replace('_', ' ')} />
                             <DetailBlock
-                                label="Salary"
+                                label="Basic Salary"
                                 value={`₹${employee?.basicSalary?.toLocaleString()}`}
                                 icon={CreditCard}
                             />
+                        </div>
+                    </div>
+
+                    {/* Financial Information Section */}
+                    <div className="bg-white rounded-2xl shadow-sm p-6 overflow-hidden border-t-4 border-green-500">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <CreditCard size={20} className="text-green-600" />
+                                Financial Information
+                            </h2>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                            <DetailBlock label="Bank Name" value={employee?.bankName} />
+                            <DetailBlock label="Account Number" value={employee?.bankAccountNo} />
+                            <DetailBlock label="IFSC Code" value={employee?.ifscCode} />
+                            <DetailBlock label="PAN Number" value={employee?.panNo} />
+                            <DetailBlock label="PF Number" value={employee?.pfNo} />
+                            <DetailBlock label="UAN Number" value={employee?.uanNo} />
+                            <DetailBlock label="ESI Number" value={employee?.esiNo} />
                         </div>
                     </div>
 

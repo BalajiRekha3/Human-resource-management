@@ -26,6 +26,11 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
+    private final com.example.hr.management.repository.AttendanceRepository attendanceRepository;
+    private final com.example.hr.management.repository.PayrollRepository payrollRepository;
+    private final com.example.hr.management.repository.LeaveRepository leaveRepository;
+    private final com.example.hr.management.repository.LeaveBalanceRepository leaveBalanceRepository;
+    private final com.example.hr.management.repository.SalaryStructureRepository salaryStructureRepository;
 
     @Override
     @Transactional
@@ -54,6 +59,13 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setCountry(dto.getCountry());
         employee.setDepartment(dto.getDepartment());
         employee.setDesignation(dto.getDesignation());
+        employee.setUanNo(dto.getUanNo());
+        employee.setPfNo(dto.getPfNo());
+        employee.setEsiNo(dto.getEsiNo());
+        employee.setPanNo(dto.getPanNo());
+        employee.setBankName(dto.getBankName());
+        employee.setBankAccountNo(dto.getBankAccountNo());
+        employee.setIfscCode(dto.getIfscCode());
         employee.setJoiningDate(dto.getJoiningDate());
         employee.setEmploymentType(dto.getEmploymentType() != null ? dto.getEmploymentType() : "FULL_TIME");
         employee.setEmploymentStatus(dto.getEmploymentStatus() != null ? dto.getEmploymentStatus() : "ACTIVE");
@@ -108,6 +120,16 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setEmploymentStatus(dto.getEmploymentStatus());
         employee.setBasicSalary(dto.getBasicSalary());
         employee.setManagerId(dto.getManagerId());
+
+        // Financial Details
+        employee.setUanNo(dto.getUanNo());
+        employee.setPfNo(dto.getPfNo());
+        employee.setEsiNo(dto.getEsiNo());
+        employee.setPanNo(dto.getPanNo());
+        employee.setBankName(dto.getBankName());
+        employee.setBankAccountNo(dto.getBankAccountNo());
+        employee.setIfscCode(dto.getIfscCode());
+
         employee.setUpdatedAt(LocalDateTime.now());
 
         if (dto.getUserId() != null) {
@@ -212,7 +234,26 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void deleteEmployee(Long id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + id));
+
+        // Delete related records first to satisfy FK constraints
+        salaryStructureRepository.deleteByEmployeeId(id);
+        attendanceRepository.deleteByEmployeeId(id);
+        leaveRepository.deleteByEmployeeId(id);
+        leaveBalanceRepository.deleteByEmployeeId(id);
+        payrollRepository.deleteByEmployeeId(id);
+
+        // Handle User deletion
+        Long userId = null;
+        if (employee.getUser() != null) {
+            userId = employee.getUser().getId();
+        }
+
         employeeRepository.delete(employee);
+
+        // Delete associated User account if exists
+        if (userId != null) {
+            userRepository.deleteById(userId);
+        }
     }
 
     @Override
@@ -244,6 +285,13 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .country(employee.getCountry())
                 .department(employee.getDepartment())
                 .designation(employee.getDesignation())
+                .uanNo(employee.getUanNo())
+                .pfNo(employee.getPfNo())
+                .esiNo(employee.getEsiNo())
+                .panNo(employee.getPanNo())
+                .bankName(employee.getBankName())
+                .bankAccountNo(employee.getBankAccountNo())
+                .ifscCode(employee.getIfscCode())
                 .joiningDate(employee.getJoiningDate())
                 .employmentType(employee.getEmploymentType())
                 .employmentStatus(employee.getEmploymentStatus())

@@ -65,6 +65,28 @@ public class Employee {
     @Column(length = 100)
     private String designation;
 
+    // Financial Details
+    @Column(name = "uan_no", length = 50)
+    private String uanNo;
+
+    @Column(name = "pf_no", length = 50)
+    private String pfNo;
+
+    @Column(name = "esi_no", length = 50)
+    private String esiNo;
+
+    @Column(name = "pan_no", length = 20)
+    private String panNo;
+
+    @Column(name = "bank_name", length = 100)
+    private String bankName;
+
+    @Column(name = "bank_account_no", length = 50)
+    private String bankAccountNo;
+
+    @Column(name = "ifsc_code", length = 20)
+    private String ifscCode;
+
     @Column(name = "joining_date")
     private LocalDate joiningDate;
 

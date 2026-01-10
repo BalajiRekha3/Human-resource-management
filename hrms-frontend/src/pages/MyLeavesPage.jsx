@@ -10,14 +10,13 @@ const MyLeavesPage = () => {
     const [leaves, setLeaves] = useState([]);
     const [loading, setLoading] = useState(false);
     const [filterStatus, setFilterStatus] = useState('ALL'); // For My Leaves
+    const employeeId = user?.employeeId;
     const [activeTab, setActiveTab] = useState('MY_LEAVES');
 
     // Management State
     const [allLeaves, setAllLeaves] = useState([]);
     const [manageFilter, setManageFilter] = useState('ALL'); // For HR View
     const [rejectionReason, setRejectionReason] = useState({});
-
-    const employeeId = user?.employeeId;
 
     useEffect(() => {
         const isValidEmployeeId = employeeId && employeeId !== 'null' && employeeId !== 'undefined';
@@ -142,18 +141,26 @@ const MyLeavesPage = () => {
 
                             {/* My Leaves Filters */}
                             <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                                {['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map(status => (
-                                    <button
-                                        key={status}
-                                        onClick={() => setFilterStatus(status)}
-                                        className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${filterStatus === status
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                                            }`}
-                                    >
-                                        {status}
-                                    </button>
-                                ))}
+                                {['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map(status => {
+                                    const count = status === 'ALL'
+                                        ? leaves.length
+                                        : leaves.filter(l => l.status === status).length;
+                                    return (
+                                        <button
+                                            key={status}
+                                            onClick={() => setFilterStatus(status)}
+                                            className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 whitespace-nowrap ${filterStatus === status
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                                                }`}
+                                        >
+                                            {status}
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${filterStatus === status ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                                                {count}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
                             </div>
 
                             {/* My Leaves Content */}

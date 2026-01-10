@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { employeeAPI, attendanceAPI, leaveBalanceAPI, payrollAPI } from '../services/api';
-import { Users, Briefcase, UserCheck, TrendingUp, Clock, Calendar, CreditCard, Shield, FileText, User } from 'lucide-react';
+import { employeeAPI, attendanceAPI, leaveBalanceAPI, payrollAPI, leaveAPI } from '../services/api';
+import { Users, Briefcase, UserCheck, TrendingUp, Clock, Calendar, CreditCard, Shield, FileText, User, X } from 'lucide-react';
 
 const Dashboard = () => {
     const [stats, setStats] = useState({
@@ -11,6 +11,7 @@ const Dashboard = () => {
         absentToday: 0,
         leaveBalance: [],
         lastSalary: null,
+        leaveStats: { pending: 0, approved: 0, rejected: 0 }
     });
     const { user, employeeId, isAdmin, isHR } = useAuth();
     const [loading, setLoading] = useState(true);
@@ -70,15 +71,22 @@ const Dashboard = () => {
             } else if (employeeId) {
                 // Employee View Data
                 try {
-                    const [balances, payrolls] = await Promise.all([
+                    const [balances, payrolls, leavesRes] = await Promise.all([
                         leaveBalanceAPI.getAllForEmployee(employeeId, currentYear),
-                        payrollAPI.getEmployeePayrolls(employeeId)
+                        payrollAPI.getEmployeePayrolls(employeeId),
+                        leaveAPI.getEmployeeLeaves(employeeId)
                     ]);
+
+                    const leaveList = Array.isArray(leavesRes.data) ? leavesRes.data : [];
+                    const pending = leaveList.filter(l => l.status === 'PENDING').length;
+                    const approved = leaveList.filter(l => l.status === 'APPROVED').length;
+                    const rejected = leaveList.filter(l => l.status === 'REJECTED').length;
 
                     setStats(prev => ({
                         ...prev,
                         leaveBalance: balances.data.data || [],
-                        lastSalary: payrolls.data.data?.[0] || null
+                        lastSalary: payrolls.data.data?.[0] || null,
+                        leaveStats: { pending, approved, rejected }
                     }));
                 } catch (empError) {
                     console.error("Error fetching employee specific data", empError);
@@ -155,6 +163,43 @@ const Dashboard = () => {
                             <p className="text-yellow-700">Link your account to an employee profile to see more details.</p>
                         </div>
                     )}
+
+                    {/* Leave Status Summary Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-400">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Pending Leaves</p>
+                                    <p className="text-2xl font-bold text-gray-900 mt-1">{stats.leaveStats?.pending || 0}</p>
+                                </div>
+                                <div className="bg-yellow-100 p-3 rounded-lg text-yellow-600">
+                                    <Clock size={20} />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Approved Leaves</p>
+                                    <p className="text-2xl font-bold text-gray-900 mt-1">{stats.leaveStats?.approved || 0}</p>
+                                </div>
+                                <div className="bg-green-100 p-3 rounded-lg text-green-600">
+                                    <UserCheck size={20} />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Rejected Leaves</p>
+                                    <p className="text-2xl font-bold text-gray-900 mt-1">{stats.leaveStats?.rejected || 0}</p>
+                                </div>
+                                <div className="bg-red-100 p-3 rounded-lg text-red-600">
+                                    <X size={20} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Leave Balance Card */}

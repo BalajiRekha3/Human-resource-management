@@ -29,4 +29,6 @@ public interface LeaveRepository extends JpaRepository<Leave, Long> {
     List<Leave> findOverlappingLeaves(@Param("employeeId") Long employeeId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
+
+    void deleteByEmployeeId(Long employeeId);
 }

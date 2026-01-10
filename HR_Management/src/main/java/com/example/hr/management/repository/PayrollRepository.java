@@ -13,4 +13,6 @@ public interface PayrollRepository extends JpaRepository<Payroll, Long> {
     List<Payroll> findByEmployeeId(Long employeeId);
 
     Optional<Payroll> findByEmployeeIdAndPayPeriodStartAndPayPeriodEnd(Long employeeId, LocalDate start, LocalDate end);
+
+    void deleteByEmployeeId(Long employeeId);
 }

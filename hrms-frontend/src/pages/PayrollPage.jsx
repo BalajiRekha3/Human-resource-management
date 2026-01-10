@@ -95,40 +95,83 @@ const SalaryStructureTab = ({ employees }) => {
         incomeTax: ''
     });
 
+    const [percentages, setPercentages] = useState({
+        houseRentAllowance: '',
+        dearnessAllowance: '',
+        medicalAllowance: '',
+        transportAllowance: '',
+        specialAllowance: '',
+        providentFund: '',
+        professionalTax: '',
+        incomeTax: ''
+    });
+
+    // Helper: Calculate Percentage from Amount
+    const calcPercent = (amount, basic) => {
+        if (!amount || !basic || parseFloat(basic) === 0) return '';
+        const p = (parseFloat(amount) / parseFloat(basic)) * 100;
+        return parseFloat(p.toFixed(2));
+    };
+
+    // Helper: Calculate Amount from Percentage
+    const calcAmount = (percent, basic) => {
+        if (!percent || !basic) return '';
+        const a = (parseFloat(basic) * parseFloat(percent)) / 100;
+        return Math.round(a);
+    };
+
     const handleSelectEmployee = async (emp) => {
         setSelectedEmployee(emp);
         try {
             const res = await payrollService.getSalaryStructure(emp.id);
             if (res.success && res.data) {
-                setStructure(res.data);
+                const s = res.data;
+                setStructure(s);
+                // Reverse calculate percentages (if applicable)
+                if (s.basicSalary) {
+                    setPercentages({
+                        houseRentAllowance: calcPercent(s.houseRentAllowance, s.basicSalary),
+                        dearnessAllowance: calcPercent(s.dearnessAllowance, s.basicSalary),
+                        medicalAllowance: calcPercent(s.medicalAllowance, s.basicSalary),
+                        transportAllowance: calcPercent(s.transportAllowance, s.basicSalary),
+                        specialAllowance: calcPercent(s.specialAllowance, s.basicSalary),
+                        providentFund: calcPercent(s.providentFund, s.basicSalary),
+                        professionalTax: calcPercent(s.professionalTax, s.basicSalary),
+                        incomeTax: calcPercent(s.incomeTax, s.basicSalary)
+                    });
+                }
             } else {
-                // Reset if no structure exists
-                setStructure({
-                    basicSalary: '',
-                    houseRentAllowance: '',
-                    dearnessAllowance: '',
-                    medicalAllowance: '',
-                    transportAllowance: '',
-                    specialAllowance: '',
-                    providentFund: '',
-                    professionalTax: '',
-                    incomeTax: ''
-                });
+                resetForm();
             }
         } catch (error) {
             console.log("No structure found, creating new");
-            setStructure({
-                basicSalary: '',
-                houseRentAllowance: '',
-                dearnessAllowance: '',
-                medicalAllowance: '',
-                transportAllowance: '',
-                specialAllowance: '',
-                providentFund: '',
-                professionalTax: '',
-                incomeTax: ''
-            });
+            resetForm();
         }
+    };
+
+    const resetForm = () => {
+        const empty = {
+            basicSalary: '',
+            houseRentAllowance: '',
+            dearnessAllowance: '',
+            medicalAllowance: '',
+            transportAllowance: '',
+            specialAllowance: '',
+            providentFund: '',
+            professionalTax: '',
+            incomeTax: ''
+        };
+        setStructure(empty);
+        setPercentages({
+            houseRentAllowance: '',
+            dearnessAllowance: '',
+            medicalAllowance: '',
+            transportAllowance: '',
+            specialAllowance: '',
+            providentFund: '',
+            professionalTax: '',
+            incomeTax: ''
+        });
     };
 
     const handleSave = async (e) => {
@@ -140,6 +183,68 @@ const SalaryStructureTab = ({ employees }) => {
             toast.error("Failed to save structure");
         }
     };
+
+    const handleBasicChange = (e) => {
+        const newBasic = e.target.value;
+        setStructure(prev => ({ ...prev, basicSalary: newBasic }));
+
+        // Recalculate amounts based on existing percentages
+        if (newBasic) {
+            const newStruct = { ...structure, basicSalary: newBasic };
+            Object.keys(percentages).forEach(key => {
+                if (percentages[key] !== '' && percentages[key] !== null) {
+                    newStruct[key] = calcAmount(percentages[key], newBasic);
+                }
+            });
+            setStructure(newStruct);
+        }
+    };
+
+    const handlePercentChange = (key, val) => {
+        setPercentages(prev => ({ ...prev, [key]: val }));
+        if (structure.basicSalary) {
+            const amount = calcAmount(val, structure.basicSalary);
+            setStructure(prev => ({ ...prev, [key]: amount }));
+        }
+    };
+
+    const handleAmountChange = (key, val) => {
+        setStructure(prev => ({ ...prev, [key]: val }));
+        if (structure.basicSalary) {
+            const p = calcPercent(val, structure.basicSalary);
+            setPercentages(prev => ({ ...prev, [key]: p }));
+        }
+    };
+
+    const renderInputRow = (label, key, required = false) => (
+        <div className="flex items-center gap-4 mb-3">
+            <div className="w-1/3">
+                <label className="block text-xs text-gray-500 mb-1">{label}</label>
+            </div>
+            <div className="w-1/3 relative">
+                <input
+                    type="number"
+                    placeholder="%"
+                    value={percentages[key]}
+                    onChange={(e) => handlePercentChange(key, e.target.value)}
+                    className="w-full pl-3 pr-6 py-2 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                    disabled={!structure.basicSalary}
+                />
+                <span className="absolute right-2 top-2 text-gray-400 text-xs">%</span>
+            </div>
+            <div className="w-1/3 relative">
+                <span className="absolute left-2 top-2 text-gray-400 text-xs">₹</span>
+                <input
+                    type="number"
+                    required={required}
+                    value={structure[key]}
+                    onChange={(e) => handleAmountChange(key, e.target.value)}
+                    className="w-full pl-6 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                    disabled={!structure.basicSalary}
+                />
+            </div>
+        </div>
+    );
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-0 divide-x divide-gray-200 h-full">
@@ -163,7 +268,7 @@ const SalaryStructureTab = ({ employees }) => {
             </div>
 
             {/* Form */}
-            <div className="md:col-span-2 p-6 md:p-8">
+            <div className="md:col-span-2 p-6 md:p-8 overflow-y-auto max-h-[600px]">
                 {selectedEmployee ? (
                     <form onSubmit={handleSave} className="max-w-xl space-y-6">
                         <div className="flex items-center justify-between">
@@ -175,64 +280,48 @@ const SalaryStructureTab = ({ employees }) => {
                             </span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2">
-                                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Basic Salary</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-2.5 text-gray-400">₹</span>
-                                    <input
-                                        type="number"
-                                        required
-                                        value={structure.basicSalary}
-                                        onChange={(e) => setStructure({ ...structure, basicSalary: e.target.value })}
-                                        className="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                    />
-                                </div>
+                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                                BASIC SALARY
+                            </label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-2.5 text-gray-400 text-lg">₹</span>
+                                <input
+                                    type="number"
+                                    required
+                                    value={structure.basicSalary}
+                                    onChange={handleBasicChange}
+                                    className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg text-lg font-semibold text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    placeholder="Enter Basic Salary"
+                                />
                             </div>
+                            <p className="text-xs text-gray-500 mt-2">
+                                All percentage calculations are based on this amount.
+                            </p>
+                        </div>
 
-                            {/* Allowances */}
-                            <div className="col-span-2 mt-2"><h4 className="text-sm font-semibold text-green-600">Earnings</h4></div>
-
+                        <div className="grid grid-cols-1 gap-6">
+                            {/* Earnings */}
                             <div>
-                                <label className="block text-xs text-gray-500 mb-1">HRA</label>
-                                <input type="number" required value={structure.houseRentAllowance} onChange={(e) => setStructure({ ...structure, houseRentAllowance: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
-                            </div>
-                            <div>
-                                <label className="block text-xs text-gray-500 mb-1">DA</label>
-                                <input type="number" required value={structure.dearnessAllowance} onChange={(e) => setStructure({ ...structure, dearnessAllowance: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
-                            </div>
-                            <div>
-                                <label className="block text-xs text-gray-500 mb-1">Medical</label>
-                                <input type="number" required value={structure.medicalAllowance} onChange={(e) => setStructure({ ...structure, medicalAllowance: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
-                            </div>
-                            <div>
-                                <label className="block text-xs text-gray-500 mb-1">Transport</label>
-                                <input type="number" required value={structure.transportAllowance} onChange={(e) => setStructure({ ...structure, transportAllowance: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
-                            </div>
-                            <div>
-                                <label className="block text-xs text-gray-500 mb-1">Special</label>
-                                <input type="number" value={structure.specialAllowance} onChange={(e) => setStructure({ ...structure, specialAllowance: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                <h4 className="text-sm font-bold text-green-600 mb-3 border-b pb-2">Earnings</h4>
+                                {renderInputRow("HRA", "houseRentAllowance", true)}
+                                {renderInputRow("DA", "dearnessAllowance", true)}
+                                {renderInputRow("Medical", "medicalAllowance", true)}
+                                {renderInputRow("Transport", "transportAllowance", true)}
+                                {renderInputRow("Special", "specialAllowance")}
                             </div>
 
                             {/* Deductions */}
-                            <div className="col-span-2 mt-2"><h4 className="text-sm font-semibold text-red-600">Deductions</h4></div>
-
                             <div>
-                                <label className="block text-xs text-gray-500 mb-1">Provident Fund</label>
-                                <input type="number" required value={structure.providentFund} onChange={(e) => setStructure({ ...structure, providentFund: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
-                            </div>
-                            <div>
-                                <label className="block text-xs text-gray-500 mb-1">Professional Tax</label>
-                                <input type="number" required value={structure.professionalTax} onChange={(e) => setStructure({ ...structure, professionalTax: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
-                            </div>
-                            <div>
-                                <label className="block text-xs text-gray-500 mb-1">Income Tax</label>
-                                <input type="number" value={structure.incomeTax} onChange={(e) => setStructure({ ...structure, incomeTax: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                                <h4 className="text-sm font-bold text-red-600 mb-3 border-b pb-2">Deductions</h4>
+                                {renderInputRow("Provident Fund", "providentFund", true)}
+                                {renderInputRow("Professional Tax", "professionalTax", true)}
+                                {renderInputRow("Income Tax", "incomeTax")}
                             </div>
                         </div>
 
                         <div className="pt-4 border-t border-gray-100 flex justify-end">
-                            <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                            <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm">
                                 Save Structure
                             </button>
                         </div>

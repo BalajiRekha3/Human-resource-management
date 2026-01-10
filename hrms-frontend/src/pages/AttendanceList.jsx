@@ -154,6 +154,16 @@ const AttendanceList = () => {
         }
     };
 
+    const formatLateTime = (minutes) => {
+        if (!minutes) return '0 min';
+        const hrs = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        if (hrs > 0) {
+            return `${hrs} hr${hrs > 1 ? 's' : ''} ${mins} min${mins !== 1 ? 's' : ''}`;
+        }
+        return `${mins} min${mins !== 1 ? 's' : ''}`;
+    };
+
     const handleClockIn = async (employeeId) => {
         try {
             if (!employeeId) {
@@ -172,7 +182,7 @@ const AttendanceList = () => {
                 toast.success(`✅ Clock In successful at ${clockInTime}`);
 
                 if (response.data.isLate) {
-                    toast.warning(`⚠️ Clocked in ${response.data.lateMinutes} minutes late`);
+                    toast.warning(`⚠️ Clocked in ${formatLateTime(response.data.lateMinutes)} late`);
                 } else {
                     toast.info('✓ You are on time!');
                 }

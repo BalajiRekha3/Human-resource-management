@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { employeeAPI } from '../../services/api';
 import {
     LayoutDashboard,
+    UserPlus,
     Users,
     Calendar,
     FileText,
@@ -48,6 +49,7 @@ const DashboardLayout = () => {
 
     const menuItems = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+        { name: 'Create User Account', path: '/dashboard/users/create', icon: UserPlus, roles: ['ROLE_ADMIN', 'ROLE_HR'] },
         { name: 'Employees', path: '/dashboard/employees', icon: Users, roles: ['ROLE_ADMIN', 'ROLE_HR'] },
         { name: 'Attendance', path: '/dashboard/attendance', icon: Clock },
         {
@@ -124,7 +126,7 @@ const DashboardLayout = () => {
 
             {/* Sidebar */}
             <aside
-                className={`fixed left-0 top-16 h-full bg-white border-r border-gray-200 w-64 transition-transform duration-300 ease-in-out z-20 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                className={`fixed left-0 top-16 bottom-0 bg-white border-r border-gray-200 w-64 transition-transform duration-300 ease-in-out z-20 overflow-y-auto ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
                     } lg:translate-x-0`}
             >
                 <nav className="p-4 space-y-1">

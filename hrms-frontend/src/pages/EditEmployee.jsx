@@ -322,6 +322,74 @@ const EditEmployee = () => {
                     </div>
                 </div>
 
+                {/* Financial Information */}
+                <div className="p-8 border-b border-gray-200">
+                    <div className="flex items-center gap-2 mb-6">
+                        <div className="p-2 bg-yellow-100 rounded-lg">
+                            <DollarSign className="text-yellow-600" size={24} />
+                        </div>
+                        <h2 className="text-xl font-semibold text-gray-900">Financial Information</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <FormInput
+                            label="UAN Number"
+                            name="uanNo"
+                            value={formData.uanNo || ''}
+                            onChange={handleChange}
+                            placeholder="12 digit UAN"
+                            maxLength={50}
+                        />
+                        <FormInput
+                            label="PF Number"
+                            name="pfNo"
+                            value={formData.pfNo || ''}
+                            onChange={handleChange}
+                            placeholder="PF Account No"
+                            maxLength={50}
+                        />
+                        <FormInput
+                            label="ESI Number"
+                            name="esiNo"
+                            value={formData.esiNo || ''}
+                            onChange={handleChange}
+                            placeholder="ESI Insurance No"
+                            maxLength={50}
+                        />
+                        <FormInput
+                            label="PAN Number"
+                            name="panNo"
+                            value={formData.panNo || ''}
+                            onChange={handleChange}
+                            placeholder="ABCDE1234F"
+                            maxLength={10}
+                        />
+                        <FormInput
+                            label="Bank Name"
+                            name="bankName"
+                            value={formData.bankName || ''}
+                            onChange={handleChange}
+                            placeholder="HDFC Bank"
+                            maxLength={100}
+                        />
+                        <FormInput
+                            label="Account Number"
+                            name="bankAccountNo"
+                            value={formData.bankAccountNo || ''}
+                            onChange={handleChange}
+                            placeholder="Account Number"
+                            maxLength={50}
+                        />
+                        <FormInput
+                            label="IFSC Code"
+                            name="ifscCode"
+                            value={formData.ifscCode || ''}
+                            onChange={handleChange}
+                            placeholder="HDFC0001234"
+                            maxLength={11}
+                        />
+                    </div>
+                </div>
+
                 {/* Form Actions */}
                 <div className="p-8 flex gap-4">
                     <button
@@ -346,7 +414,7 @@ const EditEmployee = () => {
 };
 
 // Helper Components (Same as AddEmployee)
-const FormInput = ({ label, name, type = 'text', value, onChange, required, placeholder, icon, className = '' }) => (
+const FormInput = ({ label, name, type = 'text', value, onChange, required, placeholder, icon, className = '', ...props }) => (
     <div className={className}>
         <label className="block text-sm font-medium text-gray-700 mb-2">
             {label} {required && <span className="text-red-500">*</span>}
@@ -360,6 +428,7 @@ const FormInput = ({ label, name, type = 'text', value, onChange, required, plac
                 onChange={onChange}
                 required={required}
                 placeholder={placeholder}
+                maxLength={props.maxLength}
                 className={`w-full ${icon ? 'pl-10' : 'pl-4'} pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition`}
             />
         </div>

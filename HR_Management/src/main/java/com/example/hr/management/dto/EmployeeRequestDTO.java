@@ -49,6 +49,14 @@ public class EmployeeRequestDTO {
     @NotBlank(message = "Designation is required")
     private String designation;
 
+    private String uanNo;
+    private String pfNo;
+    private String esiNo;
+    private String panNo;
+    private String bankName;
+    private String bankAccountNo;
+    private String ifscCode;
+
     @NotNull(message = "Joining date is required")
     private LocalDate joiningDate;
 

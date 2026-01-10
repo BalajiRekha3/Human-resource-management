@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface SalaryStructureRepository extends JpaRepository<SalaryStructure, Long> {
     Optional<SalaryStructure> findByEmployeeId(Long employeeId);
+
+    void deleteByEmployeeId(Long employeeId);
 }
