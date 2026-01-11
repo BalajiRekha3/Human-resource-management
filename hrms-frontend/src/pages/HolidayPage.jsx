@@ -91,56 +91,65 @@ const HolidayPage = () => {
                 </div>
 
                 {/* STATS */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    <StatCard title="Public Holidays" value={countByType('PUBLIC')} color="red" />
-                    <StatCard title="Festivals" value={countByType('FESTIVAL')} color="purple" />
-                    <StatCard title="Optional Holidays" value={countByType('OPTIONAL')} color="yellow" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <StatCard title="Public Holidays" value={countByType('PUBLIC')} color="bg-rose-500" icon={CalendarDays} />
+                    <StatCard title="Festivals" value={countByType('FESTIVAL')} color="bg-violet-500" icon={CalendarDays} />
+                    <StatCard title="Optional Holidays" value={countByType('OPTIONAL')} color="bg-amber-500" icon={CalendarDays} />
                 </div>
 
                 {/* CONTENT */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-                    {/* LEFT LIST */}
-                    <div className="bg-white rounded-2xl border shadow-sm p-4 h-[680px] custom-scroll">
-                        <h2 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                            <CalendarDays size={18} /> Holiday List – 2026
-                        </h2>
+                    {/* LEFT LIST - 4 Columns (approx 33%) */}
+                    <div className="lg:col-span-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-[620px] flex flex-col">
+                        <div className="flex items-center gap-2 mb-6 border-b border-gray-50 pb-4">
+                            <div className="p-2 bg-gray-50 text-gray-500 rounded-lg">
+                                <CalendarDays size={18} />
+                            </div>
+                            <h2 className="font-bold text-gray-800">Holiday List – 2026</h2>
+                        </div>
 
-                        <div className="space-y-6">
-                            {monthOrder.map(month => (
-                                holidaysByMonth[month] && (
-                                    <div key={month}>
-                                        <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                                            {month}
-                                        </h3>
+                        <div className="flex-1 custom-scroll pr-2">
+                            <div className="space-y-6">
+                                {monthOrder.map(month => (
+                                    holidaysByMonth[month] && (
+                                        <div key={month} className="relative">
+                                            <div className="sticky top-0 bg-white z-10 py-1 mb-3">
+                                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                                    {month}
+                                                </h3>
+                                            </div>
 
-                                        <div className="space-y-3">
-                                            {holidaysByMonth[month].map(h => (
-                                                <div
-                                                    key={h.id}
-                                                    className="p-3 rounded-xl border bg-gray-50 hover:bg-white hover:shadow transition cursor-pointer"
-                                                >
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="font-medium text-gray-900">{h.name}</span>
-                                                        <span className={`text-xs px-2 py-1 rounded-full ${badgeColor[h.type]}`}>
-                                                            {h.type}
-                                                        </span>
+                                            <div className="space-y-2">
+                                                {holidaysByMonth[month].map(h => (
+                                                    <div
+                                                        key={h.id}
+                                                        className="group p-3 rounded-xl border border-gray-50 bg-gray-50/50 hover:bg-white hover:border-blue-100 hover:shadow-md transition-all duration-300 cursor-default"
+                                                    >
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <span className="font-bold text-gray-900 text-sm group-hover:text-blue-600 transition-colors">{h.name}</span>
+                                                                <p className="text-[10px] text-gray-500 mt-0.5 font-medium italic">
+                                                                    {new Date(h.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                                                                </p>
+                                                            </div>
+                                                            <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter ${badgeColor[h.type]}`}>
+                                                                {h.type}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[11px] text-gray-500 mt-2 line-clamp-2 leading-relaxed">{h.description}</p>
                                                     </div>
-                                                    <p className="text-sm text-gray-500 mt-1">{h.description}</p>
-                                                    <p className="text-xs text-gray-400 mt-1">
-                                                        {new Date(h.date).toDateString()}
-                                                    </p>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                )
-                            ))}
+                                    )
+                                ))}
+                            </div>
                         </div>
                     </div>
 
-                    {/* RIGHT CALENDAR */}
-                    <div className="lg:col-span-2 bg-white rounded-2xl border shadow-sm p-4">
+                    {/* RIGHT CALENDAR - 8 Columns (approx 66%) */}
+                    <div className="lg:col-span-8">
                         <HolidayCalendar holidays={holidays} />
                     </div>
                 </div>
@@ -152,18 +161,21 @@ const HolidayPage = () => {
 /* =======================
    STAT CARD
 ======================= */
-const StatCard = ({ title, value, color }) => {
-    const accent = {
-        red: 'from-red-500 to-red-400',
-        purple: 'from-purple-500 to-purple-400',
-        yellow: 'from-yellow-500 to-yellow-400'
-    };
-
+const StatCard = ({ title, value, color, icon: Icon }) => {
     return (
-        <div className="relative bg-white rounded-2xl border shadow-sm p-5 hover:shadow-md transition">
-            <div className={`absolute inset-x-0 top-0 h-1 rounded-t-2xl bg-gradient-to-r ${accent[color]}`} />
-            <p className="text-sm text-gray-500">{title}</p>
-            <h2 className="text-3xl font-bold text-gray-900 mt-2">{value}</h2>
+        <div className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div className="flex justify-between items-center">
+                <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
+                </div>
+                <div className={`${color} p-4 rounded-2xl shadow-lg ring-4 ring-white transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                    <Icon size={24} className="text-white" />
+                </div>
+            </div>
+
+            {/* Subtle bottom accent line */}
+            <div className={`absolute bottom-0 left-6 right-6 h-0.5 rounded-full ${color} opacity-20`} />
         </div>
     );
 };

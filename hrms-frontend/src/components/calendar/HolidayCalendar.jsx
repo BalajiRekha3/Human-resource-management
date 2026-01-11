@@ -38,81 +38,89 @@ const HolidayCalendar = ({ holidays }) => {
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Header */}
-            <div className="p-6 flex items-center justify-between border-b border-gray-100">
-                <div className="flex items-center gap-4">
+            <div className="px-5 py-4 flex items-center justify-between border-b border-gray-50 bg-white">
+                <div className="flex items-center gap-3">
                     <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                        <CalendarIcon size={24} />
+                        <CalendarIcon size={20} />
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900">
+                    <h2 className="text-lg font-bold text-gray-800">
                         {monthNames[month]} {year}
                     </h2>
                 </div>
-                <div className="flex gap-2">
-                    <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-600">
-                        <ChevronLeft size={20} />
+                <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl">
+                    <button onClick={prevMonth} className="p-1.5 hover:bg-white hover:shadow-sm rounded-lg transition text-gray-600">
+                        <ChevronLeft size={18} />
                     </button>
-                    <button onClick={() => setCurrentDate(new Date())} className="px-3 py-1 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
+                    <button onClick={() => setCurrentDate(new Date())} className="px-3 py-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition">
                         Today
                     </button>
-                    <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-600">
-                        <ChevronRight size={20} />
+                    <button onClick={nextMonth} className="p-1.5 hover:bg-white hover:shadow-sm rounded-lg transition text-gray-600">
+                        <ChevronRight size={18} />
                     </button>
                 </div>
             </div>
 
             {/* Grid Header */}
-            <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
+            <div className="grid grid-cols-7 border-b border-gray-50">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                    <div key={day} className="py-3 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                    <div key={day} className="py-2.5 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                         {day}
                     </div>
                 ))}
             </div>
 
             {/* Calendar Grid */}
-            <div className="overflow-x-auto">
-                <div className="grid grid-cols-7 auto-rows-fr bg-gray-100 gap-[1px] min-w-[800px]">
-                    {/* Empty cells for prev month */}
-                    {Array.from({ length: firstDay }).map((_, i) => (
-                        <div key={`empty-${i}`} className="bg-white h-32 p-2 relative group opacity-50" />
-                    ))}
+            <div className="grid grid-cols-7 bg-gray-50/50 gap-[1px]">
+                {/* Empty cells for prev month */}
+                {Array.from({ length: firstDay }).map((_, i) => (
+                    <div key={`empty-${i}`} className="bg-gray-50/30 aspect-square min-h-[60px]" />
+                ))}
 
-                    {/* Days */}
-                    {Array.from({ length: days }).map((_, i) => {
-                        const day = i + 1;
-                        const dayHolidays = getHolidaysForDate(day);
+                {/* Days */}
+                {Array.from({ length: days }).map((_, i) => {
+                    const day = i + 1;
+                    const dayHolidays = getHolidaysForDate(day);
 
-                        return (
-                            <div key={day} className={`bg-white h-32 p-2 relative group transition hover:bg-gray-50 ${isToday(day) ? 'bg-blue-50/30' : ''}`}>
-                                <div className="flex justify-between items-start">
-                                    <span className={`w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium ${isToday(day) ? 'bg-blue-600 text-white shadow-md' : 'text-gray-700'}`}>
-                                        {day}
-                                    </span>
-                                </div>
+                    return (
+                        <div key={day} className={`bg-white aspect-square min-h-[60px] p-1.5 relative group transition-all duration-200 hover:bg-blue-50/30 ${isToday(day) ? 'bg-blue-50/20' : ''}`}>
+                            <div className="flex items-center justify-center">
+                                <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold transition-all ${isToday(day) ? 'bg-blue-600 text-white shadow-sm scale-110' : 'text-gray-600'}`}>
+                                    {day}
+                                </span>
+                            </div>
 
-                                <div className="mt-2 space-y-1 overflow-y-auto max-h-[80px]">
-                                    {dayHolidays.map((holiday, idx) => (
-                                        <div
-                                            key={idx}
-                                            className={`text-xs p-1.5 rounded border border-l-4 truncate cursor-pointer transition
-                                                ${holiday.type === 'PUBLIC'
-                                                    ? 'bg-red-50 border-red-200 border-l-red-500 text-red-700 hover:bg-red-100'
-                                                    : holiday.type === 'OPTIONAL'
-                                                        ? 'bg-yellow-50 border-yellow-200 border-l-yellow-500 text-yellow-700 hover:bg-yellow-100'
-                                                        : 'bg-purple-50 border-purple-200 border-l-purple-500 text-purple-700 hover:bg-purple-100'
-                                                }`}
-                                            title={holiday.description || holiday.name}
-                                        >
-                                            {holiday.name}
+                            <div className="mt-1 flex flex-wrap justify-center gap-0.5">
+                                {dayHolidays.map((holiday, idx) => (
+                                    <div
+                                        key={idx}
+                                        className={`w-1.5 h-1.5 rounded-full ring-1 ring-white shadow-sm ${holiday.type === 'PUBLIC'
+                                            ? 'bg-red-500'
+                                            : holiday.type === 'OPTIONAL'
+                                                ? 'bg-yellow-500'
+                                                : 'bg-purple-500'
+                                            }`}
+                                        title={`${holiday.name}: ${holiday.description || ''}`}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Hover Tooltip (Simulated with group-hover) */}
+                            {dayHolidays.length > 0 && (
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 hidden group-hover:block z-50 bg-gray-900 text-white text-[10px] p-2 rounded-lg shadow-xl pointer-events-none">
+                                    {dayHolidays.map((h, hidx) => (
+                                        <div key={hidx} className="mb-1 last:mb-0">
+                                            <span className="font-bold block text-blue-300">{h.name}</span>
+                                            <span className="opacity-80">{h.type}</span>
                                         </div>
                                     ))}
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-gray-900" />
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

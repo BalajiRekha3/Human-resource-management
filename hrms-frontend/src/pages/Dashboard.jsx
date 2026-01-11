@@ -77,15 +77,15 @@ const Dashboard = () => {
                         leaveAPI.getEmployeeLeaves(employeeId)
                     ]);
 
-                    const leaveList = Array.isArray(leavesRes.data) ? leavesRes.data : [];
+                    const leaveList = leavesRes.data.success ? (leavesRes.data.data || []) : [];
                     const pending = leaveList.filter(l => l.status === 'PENDING').length;
                     const approved = leaveList.filter(l => l.status === 'APPROVED').length;
                     const rejected = leaveList.filter(l => l.status === 'REJECTED').length;
 
                     setStats(prev => ({
                         ...prev,
-                        leaveBalance: balances.data.data || [],
-                        lastSalary: payrolls.data.data?.[0] || null,
+                        leaveBalance: balances.data.success ? (balances.data.data || []) : [],
+                        lastSalary: payrolls.data.success ? (payrolls.data.data?.[0] || null) : null,
                         leaveStats: { pending, approved, rejected }
                     }));
                 } catch (empError) {
