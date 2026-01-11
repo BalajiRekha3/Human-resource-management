@@ -87,7 +87,7 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 // Public endpoints - No authentication needed
                                                 .requestMatchers("/api/auth/**").permitAll()
-                                                .requestMatchers("/swagger-ui/**", "/api-docs/**",
+                                                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**",
                                                                 "/swagger-resources/**")
                                                 .permitAll()
                                                 .requestMatchers("/v3/api-docs/**").permitAll()

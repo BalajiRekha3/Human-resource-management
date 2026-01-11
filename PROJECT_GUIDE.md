@@ -1,8 +1,13 @@
-# Project Overview & Architecture
+# HR Management System - Project Guide
 
-This guide explains how the HRMS (HR Management System) project is structured and how its components interact.
+This project is a comprehensive Human Resource Management System (HRMS) built with Spring Boot and React.
 
-## Complete Project Structure
+## 📖 Documentation
+- **[Developer Guide](file:///c:/Users/Balaji/OneDrive/Desktop/PriyanshJava/DEVELOPER_GUIDE.md)**: Detailed step-by-step documentation for developers, covering folder structure and architecture.
+
+## 🚀 Quick Start
+- **Backend**: Navigate to `HR_Management` and run `./mvnw spring-boot:run`.
+- **Frontend**: Navigate to `hrms-frontend` and run `npm run dev`.
 
 ```text
 PriyanshJava/ (Root)
