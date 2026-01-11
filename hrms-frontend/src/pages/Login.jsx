@@ -101,10 +101,10 @@ const Login = () => {
                 <div className="mt-6 text-center text-sm text-gray-600">
                     <p>Demo Credentials:</p>
                     <p className="font-mono mt-1">
-                        Username: <span className="font-semibold">hr_manager</span>
+                        Username: <span className="font-semibold">Balaji</span>
                     </p>
                     <p className="font-mono">
-                        Password: <span className="font-semibold">Hr@123456</span>
+                        Password: <span className="font-semibold">Balaji@123</span>
                     </p>
                 </div>
             </div>

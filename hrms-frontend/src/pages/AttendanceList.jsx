@@ -47,7 +47,7 @@ const AttendanceList = () => {
     const [recordToDelete, setRecordToDelete] = useState(null);
     const [clockingIn, setClockingin] = useState(false);
 
-    const { isAdmin, isHR, isEmployee, employeeId: currentEmployeeId } = useAuth();
+    const { user, isAdmin, isHR, isEmployee, employeeId: currentEmployeeId } = useAuth();
 
     const fetchedRef = useRef(false);
 
