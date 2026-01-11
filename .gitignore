@@ -56,3 +56,6 @@ Desktop.ini
 .env.test.local
 .env.production.local
 *.local
+
+# IDE Metadata
+.metadata/
